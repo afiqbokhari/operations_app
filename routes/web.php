@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\BookingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -32,6 +33,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/features/{feature}', [FeatureController::class, 'destroy'])->name('features.destroy');
 
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
+
+    Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
+    Route::get('/bookings/create', [BookingController::class, 'create'])->name('bookings.create');
+    Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
 });
 
 require __DIR__.'/auth.php';

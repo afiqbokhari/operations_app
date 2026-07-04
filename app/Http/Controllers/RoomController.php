@@ -24,6 +24,7 @@ class RoomController extends Controller
             'type' => 'required|in:hearing_room,breakout_room,mediation_room,conference_room',
             'status' => 'required|in:active,maintenance,inactive',
             'notes' => 'nullable|string',
+            'is_breakout' => 'boolean',
         ]);
 
         Room::create($validated);
@@ -41,6 +42,7 @@ class RoomController extends Controller
             'type' => 'required|in:hearing_room,breakout_room,mediation_room,conference_room',
             'status' => 'required|in:active,maintenance,inactive',
             'notes' => 'nullable|string',
+            'is_breakout' => 'boolean',
         ]);
 
         $room->update($validated);

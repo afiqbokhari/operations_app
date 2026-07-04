@@ -17,7 +17,7 @@ class ScheduleController extends Controller
         $rooms = Room::where('status', 'active')->orderBy('room_code')->get();
 
         if ($view === 'daily') {
-            $bookings = Booking::with(['room', 'case', 'participants.contact', 'features.feature'])
+            $bookings = Booking::with(['room', 'case', 'participants.contact', 'features'])
                 ->where('booking_date', $date)
                 ->where('booking_status', '!=', 'cancelled')
                 ->orderBy('room_id')
@@ -31,7 +31,7 @@ class ScheduleController extends Controller
             $startOfWeek = Carbon::parse($date)->startOfWeek(Carbon::MONDAY);
             $endOfWeek = Carbon::parse($date)->endOfWeek(Carbon::SUNDAY);
 
-            $bookings = Booking::with(['room'])
+            $bookings = Booking::with(['room', 'case'])
                 ->whereBetween('booking_date', [$startOfWeek, $endOfWeek])
                 ->where('booking_status', '!=', 'cancelled')
                 ->get()

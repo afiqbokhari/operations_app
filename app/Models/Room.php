@@ -19,6 +19,7 @@ class Room extends Model
         'type',
         'status',
         'notes',
+        'is_breakout',
     ];
 
     public function features(): BelongsToMany
