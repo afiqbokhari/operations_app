@@ -93,7 +93,7 @@ class BookingController extends Controller
             return view('bookings.create', compact(
                 'date', 'pax', 'size', 'sizeLabel', 'displayPax',
                 'rooms', 'existingBookings', 'selectedRoom', 'session',
-                'features', 'allRooms', 'contacts'
+                'features', 'allRooms', 'contacts', 'logs'
             ));
         }
 
@@ -231,9 +231,15 @@ class BookingController extends Controller
         $allRooms = Room::where('status', 'active')->where('is_breakout', true)->where('id', '!=', $selectedRoom->id)->orderBy('room_code')->get();
         $contacts = Contact::orderBy('name')->get();
 
+        $logs = \App\Models\ActivityLog::where('entity_type', 'Booking')
+            ->where('entity_id', $booking->id)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return view('bookings.edit', compact(
             'booking', 'date', 'selectedRoom', 'session',
-            'features', 'allRooms', 'contacts'
+            'features', 'allRooms', 'contacts', 'logs'
         ));
     }
 

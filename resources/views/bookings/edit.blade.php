@@ -166,6 +166,35 @@
                 <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700">Update Booking</button>
             </div>
         </form>
+
+    {{-- Activity Log --}}
+    @if($logs->isNotEmpty())
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mt-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activity History</h2>
+        <div class="relative overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th class="px-4 py-2">Time</th>
+                        <th class="px-4 py-2">User</th>
+                        <th class="px-4 py-2">Action</th>
+                        <th class="px-4 py-2 hidden md:table-cell">Changes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($logs as $log)
+                    <tr class="border-b dark:border-gray-700">
+                        <td class="px-4 py-2 text-xs">{{ $log->created_at->format('d M Y H:i') }}</td>
+                        <td class="px-4 py-2">{{ $log->user?->name ?? 'System' }}</td>
+                        <td class="px-4 py-2">{{ ucfirst($log->action) }}</td>
+                        <td class="px-4 py-2 hidden md:table-cell text-xs">@if($log->changes) @foreach($log->changes as $change) {!! $change !!}<br> @endforeach @else {{ $log->description }} @endif</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
     </div>
 </div>
 @endsection
