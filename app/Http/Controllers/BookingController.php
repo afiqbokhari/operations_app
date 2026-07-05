@@ -124,7 +124,6 @@ class BookingController extends Controller
             'internal_notes' => 'nullable|string',
         ]);
 
-        // Set times based on session
         $times = match($validated['session_type']) {
             'full_day' => ['09:00:00', '17:00:00'],
             'half_am' => ['09:00:00', '13:00:00'],
@@ -132,15 +131,12 @@ class BookingController extends Controller
             default => ['09:00:00', '17:00:00'],
         };
 
-        // Check for conflicts
         $conflict = Booking::where('room_id', $validated['room_id'])
             ->where('booking_date', $validated['booking_date'])
             ->where('booking_status', '!=', 'cancelled')
             ->where(function ($q) use ($times) {
-                $q->where(function ($q) use ($times) {
-                    $q->where('start_time', '<', $times[1])
-                      ->where('end_time', '>', $times[0]);
-                });
+                $q->where('start_time', '<', $times[1])
+                  ->where('end_time', '>', $times[0]);
             })
             ->exists();
 
@@ -148,7 +144,6 @@ class BookingController extends Controller
             return back()->withInput()->with('error', 'This room is already booked for the selected time.');
         }
 
-        // Find or create case
         $case = null;
         if ($validated['case_reference']) {
             $case = Cases::firstOrCreate(
@@ -157,7 +152,6 @@ class BookingController extends Controller
             );
         }
 
-        // Find or create contacts for each party
         $findOrCreateContact = function ($name) {
             if (!$name) return null;
             return Contact::firstOrCreate(['name' => $name], ['type' => 'individual']);
@@ -180,7 +174,6 @@ class BookingController extends Controller
             'booked_by' => auth()->id(),
         ]);
 
-        // Add claimant
         if ($contact = $findOrCreateContact($validated['claimant'])) {
             BookingParticipant::create(['booking_id' => $booking->id, 'contact_id' => $contact->id, 'role' => 'claimant', 'display_order' => 0]);
         }
@@ -194,7 +187,6 @@ class BookingController extends Controller
             BookingParticipant::create(['booking_id' => $booking->id, 'contact_id' => $contact->id, 'role' => 'respondent_solicitor', 'display_order' => 3]);
         }
 
-        // Add arbitrators
         if ($validated['arbitrators']) {
             $arbNames = explode(',', $validated['arbitrators']);
             foreach ($arbNames as $i => $name) {
@@ -211,15 +203,13 @@ class BookingController extends Controller
             }
         }
 
-        // Add features
         if ($validated['features']) {
             foreach ($validated['features'] as $featureId) {
                 BookingFeature::create(['booking_id' => $booking->id, 'feature_id' => $featureId]);
             }
         }
 
-        // Add breakout rooms
-        if ($validated['breakout_rooms']) {
+        if (!empty($validated['breakout_rooms'])) {
             foreach ($validated['breakout_rooms'] as $breakoutRoomId) {
                 if ($breakoutRoomId) {
                     BookingBreakoutRoom::create(['booking_id' => $booking->id, 'room_id' => $breakoutRoomId]);
@@ -228,5 +218,142 @@ class BookingController extends Controller
         }
 
         return redirect()->route('bookings.index')->with('success', 'Booking created successfully.');
+    }
+
+    public function edit(Booking $booking)
+    {
+        $booking->load(['room', 'case', 'participants.contact', 'features', 'breakoutRooms.room']);
+
+        $date = $booking->booking_date->format('Y-m-d');
+        $selectedRoom = $booking->room;
+        $session = $booking->session_type;
+        $features = $selectedRoom->features()->orderBy('name')->get();
+        $allRooms = Room::where('status', 'active')->where('is_breakout', true)->where('id', '!=', $selectedRoom->id)->orderBy('room_code')->get();
+        $contacts = Contact::orderBy('name')->get();
+
+        return view('bookings.edit', compact(
+            'booking', 'date', 'selectedRoom', 'session',
+            'features', 'allRooms', 'contacts'
+        ));
+    }
+
+    public function update(Request $request, Booking $booking)
+    {
+        $validated = $request->validate([
+            'booking_id' => 'required|string|unique:bookings,booking_id,' . $booking->id,
+            'room_id' => 'required|exists:rooms,id',
+            'booking_date' => 'required|date',
+            'session_type' => 'required|in:full_day,half_am,half_pm',
+            'case_reference' => 'nullable|string',
+            'claimant' => 'nullable|string',
+            'claimant_solicitor' => 'nullable|string',
+            'respondent' => 'nullable|string',
+            'respondent_solicitor' => 'nullable|string',
+            'arbitrators' => 'nullable|string',
+            'number_of_attendees' => 'nullable|integer',
+            'booking_status' => 'required|in:tentative,confirmed,completed,cancelled',
+            'features' => 'nullable|array',
+            'breakout_rooms' => 'nullable|array',
+            'special_requirements' => 'nullable|string',
+            'internal_notes' => 'nullable|string',
+        ]);
+
+        $times = match($validated['session_type']) {
+            'full_day' => ['09:00:00', '17:00:00'],
+            'half_am' => ['09:00:00', '13:00:00'],
+            'half_pm' => ['14:00:00', '17:00:00'],
+            default => ['09:00:00', '17:00:00'],
+        };
+
+        $conflict = Booking::where('room_id', $validated['room_id'])
+            ->where('booking_date', $validated['booking_date'])
+            ->where('booking_status', '!=', 'cancelled')
+            ->where('id', '!=', $booking->id)
+            ->where(function ($q) use ($times) {
+                $q->where('start_time', '<', $times[1])
+                  ->where('end_time', '>', $times[0]);
+            })
+            ->exists();
+
+        if ($conflict) {
+            return back()->withInput()->with('error', 'This room is already booked for the selected time.');
+        }
+
+        $case = null;
+        if ($validated['case_reference']) {
+            $case = Cases::firstOrCreate(
+                ['reference_number' => $validated['case_reference']],
+                ['status' => 'active']
+            );
+        }
+
+        $findOrCreateContact = function ($name) {
+            if (!$name) return null;
+            return Contact::firstOrCreate(['name' => $name], ['type' => 'individual']);
+        };
+
+        $booking->update([
+            'booking_id' => $validated['booking_id'],
+            'case_id' => $case?->id,
+            'room_id' => $validated['room_id'],
+            'booking_date' => $validated['booking_date'],
+            'session_type' => $validated['session_type'],
+            'start_time' => $times[0],
+            'end_time' => $times[1],
+            'number_of_attendees' => $validated['number_of_attendees'],
+            'booking_status' => $validated['booking_status'],
+            'special_requirements' => $validated['special_requirements'],
+            'internal_notes' => $validated['internal_notes'],
+        ]);
+
+        $booking->participants()->delete();
+
+        if ($contact = $findOrCreateContact($validated['claimant'])) {
+            BookingParticipant::create(['booking_id' => $booking->id, 'contact_id' => $contact->id, 'role' => 'claimant', 'display_order' => 0]);
+        }
+        if ($contact = $findOrCreateContact($validated['claimant_solicitor'])) {
+            BookingParticipant::create(['booking_id' => $booking->id, 'contact_id' => $contact->id, 'role' => 'claimant_solicitor', 'display_order' => 1]);
+        }
+        if ($contact = $findOrCreateContact($validated['respondent'])) {
+            BookingParticipant::create(['booking_id' => $booking->id, 'contact_id' => $contact->id, 'role' => 'respondent', 'display_order' => 2]);
+        }
+        if ($contact = $findOrCreateContact($validated['respondent_solicitor'])) {
+            BookingParticipant::create(['booking_id' => $booking->id, 'contact_id' => $contact->id, 'role' => 'respondent_solicitor', 'display_order' => 3]);
+        }
+
+        if ($validated['arbitrators']) {
+            $arbNames = explode(',', $validated['arbitrators']);
+            foreach ($arbNames as $i => $name) {
+                $name = trim($name);
+                if ($name) {
+                    $contact = $findOrCreateContact($name);
+                    BookingParticipant::create([
+                        'booking_id' => $booking->id,
+                        'contact_id' => $contact->id,
+                        'role' => $i === 0 ? 'presiding_arbitrator' : 'co_arbitrator',
+                        'display_order' => $i + 4,
+                    ]);
+                }
+            }
+        }
+
+        $booking->features()->sync($validated['features'] ?? []);
+        $booking->breakoutRooms()->delete();
+
+        if (!empty($validated['breakout_rooms'])) {
+            foreach ($validated['breakout_rooms'] as $breakoutRoomId) {
+                if ($breakoutRoomId) {
+                    BookingBreakoutRoom::create(['booking_id' => $booking->id, 'room_id' => $breakoutRoomId]);
+                }
+            }
+        }
+
+        return redirect()->route('bookings.index')->with('success', 'Booking updated successfully.');
+    }
+
+    public function destroy(Booking $booking)
+    {
+        $booking->update(['booking_status' => 'cancelled']);
+        return redirect()->route('bookings.index')->with('success', 'Booking cancelled.');
     }
 }

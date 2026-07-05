@@ -78,8 +78,8 @@
                     <td class="px-4 py-3">
                         <div class="inline-flex rounded-md shadow-sm" role="group">
                             <button class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-s-lg hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-blue-800">View</button>
-                            <button class="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 border-t border-b border-green-200 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:border-green-700 dark:hover:bg-green-800">Edit</button>
-                            <button class="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 border border-red-200 rounded-e-lg hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:border-red-700 dark:hover:bg-red-800">Cancel</button>
+                            <a href="{{ route('bookings.edit', $booking) }}" class="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 border-t border-b border-green-200 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:border-green-700 dark:hover:bg-green-800 no-underline">Edit</a>
+                            <form action="{{ route('bookings.destroy', $booking) }}" method="POST" onsubmit="return confirm('Cancel this booking?');" class="inline">@csrf @method('DELETE') <button class="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 border border-red-200 rounded-e-lg hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:border-red-700 dark:hover:bg-red-800">Cancel</button></form>
                         </div>
                     </td>
                 </tr>

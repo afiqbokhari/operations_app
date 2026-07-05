@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Booking extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'booking_id',
         'case_id',
@@ -24,6 +27,10 @@ class Booking extends Model
         'special_requirements',
         'internal_notes',
         'booked_by',
+    ];
+
+    protected $casts = [
+        'booking_date' => 'date',
     ];
 
     public function case(): BelongsTo
