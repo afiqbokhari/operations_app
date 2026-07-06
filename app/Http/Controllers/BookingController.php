@@ -93,7 +93,7 @@ class BookingController extends Controller
             return view('bookings.create', compact(
                 'date', 'pax', 'size', 'sizeLabel', 'displayPax',
                 'rooms', 'existingBookings', 'selectedRoom', 'session',
-                'features', 'allRooms', 'contacts', 'logs'
+                'features', 'allRooms', 'contacts', 'logs', 'viewMode'
             ));
         }
 
@@ -224,6 +224,7 @@ class BookingController extends Controller
     {
         $booking->load(['room', 'case', 'participants.contact', 'features', 'breakoutRooms.room']);
 
+        $viewMode = request()->has('view');
         $date = $booking->booking_date->format('Y-m-d');
         $selectedRoom = $booking->room;
         $session = $booking->session_type;
@@ -239,7 +240,7 @@ class BookingController extends Controller
 
         return view('bookings.edit', compact(
             'booking', 'date', 'selectedRoom', 'session',
-            'features', 'allRooms', 'contacts', 'logs'
+            'features', 'allRooms', 'contacts', 'logs', 'viewMode'
         ));
     }
 
