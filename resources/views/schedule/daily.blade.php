@@ -11,6 +11,8 @@
         </span>
     </div>
 
+    {{-- Bookings --}}
+    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Hearings</h2>
     @if($bookings->isEmpty())
         <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-8 text-center text-gray-500 dark:text-gray-400">
             No bookings for this date.
@@ -31,7 +33,7 @@
                 </thead>
                 <tbody>
                     @foreach($bookings as $booking)
-                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer" onclick="window.location='{{ route('bookings.edit', $booking) }}'">
                         <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $booking->room->room_code }}</td>
                         <td class="px-4 py-3">
                             <span class="px-2 py-0.5 rounded text-xs font-medium
@@ -72,6 +74,37 @@
                 </tbody>
             </table>
         </div>
+    @endif
+
+    {{-- Approved Events --}}
+    @if(isset($events) && $events->isNotEmpty())
+    <div class="mt-6">
+        <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Meetings/Events</h2>
+        <div class="relative overflow-x-auto shadow-md rounded-lg">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th class="px-4 py-3">Room</th>
+                        <th class="px-4 py-3">Event</th>
+                        <th class="px-4 py-3">Time</th>
+                        <th class="px-4 py-3 hidden md:table-cell">Organizer</th>
+                        <th class="px-4 py-3 hidden md:table-cell">Attendees</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($events as $event)
+                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer" onclick="window.location='{{ route('events.edit', $event) }}'">
+                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $event->room->room_code }}</td>
+                        <td class="px-4 py-3">{{ $event->event_name }}</td>
+                        <td class="px-4 py-3 text-xs">{{ $event->start_time }} - {{ $event->end_time }}</td>
+                        <td class="px-4 py-3 hidden md:table-cell">{{ $event->organizer ?? '-' }}</td>
+                        <td class="px-4 py-3 hidden md:table-cell">{{ $event->attendees_count ?? '-' }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
     @endif
 </div>
 @endsection

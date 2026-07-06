@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\Event;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -24,25 +25,40 @@ class ScheduleController extends Controller
                 ->orderBy('start_time')
                 ->get();
 
-            return view('schedule.daily', compact('bookings', 'rooms', 'date', 'view'));
+            $events = Event::with('room')
+                ->where('status', 'approved')
+                ->where('start_date', '<=', $date)
+                ->where('end_date', '>=', $date)
+                ->orderBy('room_id')
+                ->get();
+
+            return view('schedule.daily', compact('bookings', 'events', 'rooms', 'date', 'view'));
         }
 
         if ($view === 'weekly') {
             $startOfWeek = Carbon::parse($date)->startOfWeek(Carbon::MONDAY);
             $endOfWeek = Carbon::parse($date)->endOfWeek(Carbon::SUNDAY);
 
-            $bookings = Booking::with(['room', 'case'])
+            $bookingsRaw = Booking::with(['room', 'case'])
                 ->whereBetween('booking_date', [$startOfWeek, $endOfWeek])
                 ->where('booking_status', '!=', 'cancelled')
-                ->get()
-                ->groupBy(['room_id', 'booking_date']);
+                ->get();
+            $bookings = $bookingsRaw->groupBy('room_id')
+                ->map(fn($items) => $items->groupBy(fn($b) => $b->booking_date->toDateString()));
+
+            $eventsRaw = Event::with('room')
+                ->where('status', 'approved')
+                ->whereBetween('start_date', [$startOfWeek, $endOfWeek])
+                ->get();
+            $events = $eventsRaw->groupBy('room_id')
+                ->map(fn($items) => $items->groupBy(fn($e) => $e->start_date->toDateString()));
 
             $weekDays = [];
             for ($i = 0; $i < 7; $i++) {
                 $weekDays[] = $startOfWeek->copy()->addDays($i);
             }
 
-            return view('schedule.weekly', compact('bookings', 'rooms', 'weekDays', 'date', 'view', 'startOfWeek'));
+            return view('schedule.weekly', compact('bookings', 'events', 'rooms', 'weekDays', 'date', 'view', 'startOfWeek'));
         }
 
         if ($view === 'monthly') {
@@ -55,7 +71,29 @@ class ScheduleController extends Controller
                 ->groupBy('booking_date')
                 ->pluck('room_count', 'booking_date');
 
-            return view('schedule.monthly', compact('bookingCounts', 'date', 'view', 'monthStart', 'monthEnd'));
+            $eventCounts = Event::where('status', 'approved')
+                ->whereBetween('start_date', [$monthStart, $monthEnd])
+                ->get()
+                ->groupBy(fn($e) => $e->start_date->toDateString())
+                ->map(fn($items) => $items->count());
+
+            foreach ($eventCounts as $d => $c) {
+                $bookingCounts[$d] = ($bookingCounts[$d] ?? 0) + $c;
+            }
+
+            $monthBookings = Booking::with(['room', 'case', 'participants.contact'])
+                ->whereBetween('booking_date', [$monthStart, $monthEnd])
+                ->where('booking_status', '!=', 'cancelled')
+                ->get()
+                ->groupBy(fn($b) => $b->booking_date->toDateString());
+
+            $monthEvents = Event::with('room')
+                ->where('status', 'approved')
+                ->whereBetween('start_date', [$monthStart, $monthEnd])
+                ->get()
+                ->groupBy(fn($e) => $e->start_date->toDateString());
+
+            return view('schedule.monthly', compact('bookingCounts', 'monthBookings', 'monthEvents', 'date', 'view', 'monthStart', 'monthEnd'));
         }
 
         return redirect()->route('schedule.index', ['view' => 'daily']);

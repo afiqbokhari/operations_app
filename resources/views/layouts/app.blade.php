@@ -34,6 +34,7 @@
                     @endif
                     <a href="/features" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Features</a>
                     <a href="/bookings" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Bookings</a>
+                    <a href="/events" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Events</a>
                     <a href="#" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Cases</a>
                 </div>
 
@@ -69,6 +70,7 @@
                     @endif
                     <a href="/features" @click="open = false" class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Features</a>
                 <a href="#" class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Bookings</a>
+                <a href="/events" @click="open = false" class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Events</a>
                 <a href="#" class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cases</a>
                 <hr class="my-2 dark:border-gray-700">
                 <div class="px-3 py-2">

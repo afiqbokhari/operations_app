@@ -93,7 +93,7 @@ class BookingController extends Controller
             return view('bookings.create', compact(
                 'date', 'pax', 'size', 'sizeLabel', 'displayPax',
                 'rooms', 'existingBookings', 'selectedRoom', 'session',
-                'features', 'allRooms', 'contacts', 'logs', 'viewMode'
+                'features', 'allRooms', 'contacts'
             ));
         }
 

@@ -75,4 +75,9 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+    // Events
+    Route::middleware('role:events,auto')->group(function () {        Route::get('/events', [App\Http\Controllers\EventController::class, 'index'])->name('events.index');        Route::get('/events/create', [App\Http\Controllers\EventController::class, 'create'])->name('events.create');        Route::post('/events', [App\Http\Controllers\EventController::class, 'store'])->name('events.store');        Route::post('/events/{event}/approve', [App\Http\Controllers\EventController::class, 'approve'])->name('events.approve');        Route::post('/events/{event}/reject', [App\Http\Controllers\EventController::class, 'reject'])->name('events.reject');    });
+        Route::get('/events/{event}/edit', [App\Http\Controllers\EventController::class, 'edit'])->name('events.edit');
+        Route::put('/events/{event}', [App\Http\Controllers\EventController::class, 'update'])->name('events.update');
+        Route::post('/events/{event}/cancel', [App\Http\Controllers\EventController::class, 'cancel'])->name('events.cancel');
 require __DIR__.'/auth.php';
