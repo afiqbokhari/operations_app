@@ -7,6 +7,8 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\MenuController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -55,6 +57,18 @@ Route::middleware('auth')->group(function () {
         Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->name('bookings.destroy');
     });
 
+    // Events
+    Route::middleware('role:events,auto')->group(function () {
+        Route::get('/events', [EventController::class, 'index'])->name('events.index');
+        Route::get('/events/create', [EventController::class, 'create'])->name('events.create');
+        Route::post('/events', [EventController::class, 'store'])->name('events.store');
+        Route::get('/events/{event}/edit', [EventController::class, 'edit'])->name('events.edit');
+        Route::put('/events/{event}', [EventController::class, 'update'])->name('events.update');
+        Route::post('/events/{event}/approve', [EventController::class, 'approve'])->name('events.approve');
+        Route::post('/events/{event}/reject', [EventController::class, 'reject'])->name('events.reject');
+        Route::post('/events/{event}/cancel', [EventController::class, 'cancel'])->name('events.cancel');
+    });
+
     // Logs
     Route::middleware('role:logs,view')->group(function () {
         Route::get('/logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('logs.index');
@@ -68,16 +82,19 @@ Route::middleware('auth')->group(function () {
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 
-    // Permissions (admin only for now)
+    // Permissions
     Route::middleware('role:permissions,auto')->group(function () {
         Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
         Route::put('/permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
     });
+
+    // Menus
+    Route::middleware('role:menus,auto')->group(function () {
+        Route::get('/menus', [MenuController::class, 'index'])->name('menus.index');
+        Route::post('/menus', [MenuController::class, 'store'])->name('menus.store');
+        Route::put('/menus/{menu}', [MenuController::class, 'update'])->name('menus.update');
+        Route::delete('/menus/{menu}', [MenuController::class, 'destroy'])->name('menus.destroy');
+    });
 });
 
-    // Events
-    Route::middleware('role:events,auto')->group(function () {        Route::get('/events', [App\Http\Controllers\EventController::class, 'index'])->name('events.index');        Route::get('/events/create', [App\Http\Controllers\EventController::class, 'create'])->name('events.create');        Route::post('/events', [App\Http\Controllers\EventController::class, 'store'])->name('events.store');        Route::post('/events/{event}/approve', [App\Http\Controllers\EventController::class, 'approve'])->name('events.approve');        Route::post('/events/{event}/reject', [App\Http\Controllers\EventController::class, 'reject'])->name('events.reject');    });
-        Route::get('/events/{event}/edit', [App\Http\Controllers\EventController::class, 'edit'])->name('events.edit');
-        Route::put('/events/{event}', [App\Http\Controllers\EventController::class, 'update'])->name('events.update');
-        Route::post('/events/{event}/cancel', [App\Http\Controllers\EventController::class, 'cancel'])->name('events.cancel');
 require __DIR__.'/auth.php';

@@ -33,7 +33,7 @@
                 </thead>
                 <tbody>
                     @foreach($bookings as $booking)
-                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer" onclick="window.location='{{ route('bookings.edit', $booking) }}'">
+                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer h-28" onclick="window.location='{{ route('bookings.edit', $booking) }}'">
                         <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $booking->room->room_code }}</td>
                         <td class="px-4 py-3">
                             <span class="px-2 py-0.5 rounded text-xs font-medium
@@ -93,7 +93,7 @@
                 </thead>
                 <tbody>
                     @foreach($events as $event)
-                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer" onclick="window.location='{{ route('events.edit', $event) }}'">
+                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer h-12" onclick="window.location='{{ route('events.edit', $event) }}'">
                         <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $event->room->room_code }}</td>
                         <td class="px-4 py-3">{{ $event->event_name }}</td>
                         <td class="px-4 py-3 text-xs">{{ $event->start_time }} - {{ $event->end_time }}</td>

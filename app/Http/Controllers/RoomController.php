@@ -10,7 +10,7 @@ class RoomController extends Controller
 {
     public function index()
     {
-        $rooms = Room::with('features')->orderBy('room_code')->get();
+        $rooms = Room::with('features')->orderedByType()->get();
         return view('rooms.index', compact('rooms'));
     }
 

@@ -65,14 +65,14 @@ class BookingController extends Controller
         if ($size && isset($capacityMap[$size])) {
             $rooms = Room::where('status', 'active')
                 ->whereIn('capacity', $capacityMap[$size])
-                ->orderBy('room_code')
+                ->orderedByType()
                 ->get();
             $displayPax = $capacityMap[$size][0];
             $sizeLabel = ucfirst($size);
         } elseif ($pax) {
             $rooms = Room::where('status', 'active')
                 ->where('capacity', '>=', $pax)
-                ->orderBy('room_code')
+                ->orderedByType()
                 ->get();
             $displayPax = $pax;
         }
@@ -87,7 +87,7 @@ class BookingController extends Controller
         if ($roomId && $session) {
             $selectedRoom = Room::find($roomId);
             $features = $selectedRoom->features()->orderBy('name')->get();
-            $allRooms = Room::where('status', 'active')->where('is_breakout', true)->where('id', '!=', $roomId)->orderBy('room_code')->get();
+            $allRooms = Room::where('status', 'active')->where('is_breakout', true)->where('id', '!=', $roomId)->orderedByType()->get();
             $contacts = Contact::orderBy('name')->get();
 
             return view('bookings.create', compact(
@@ -229,7 +229,7 @@ class BookingController extends Controller
         $selectedRoom = $booking->room;
         $session = $booking->session_type;
         $features = $selectedRoom->features()->orderBy('name')->get();
-        $allRooms = Room::where('status', 'active')->where('is_breakout', true)->where('id', '!=', $selectedRoom->id)->orderBy('room_code')->get();
+        $allRooms = Room::where('status', 'active')->where('is_breakout', true)->where('id', '!=', $selectedRoom->id)->orderedByType()->get();
         $contacts = Contact::orderBy('name')->get();
 
         $logs = \App\Models\ActivityLog::where('entity_type', 'Booking')

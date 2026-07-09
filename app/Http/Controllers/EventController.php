@@ -22,7 +22,7 @@ class EventController extends Controller
 
     public function create()
     {
-        $rooms = Room::where('status', 'active')->orderBy('room_code')->get();
+        $rooms = Room::where('status', 'active')->orderedByType()->get();
         return view('events.create', compact('rooms'));
     }
 
@@ -99,7 +99,7 @@ class EventController extends Controller
 
     public function edit(Event $event)
     {
-        $rooms = Room::where('status', 'active')->orderBy('room_code')->get();
+        $rooms = Room::where('status', 'active')->orderedByType()->get();
         return view('events.edit', compact('event', 'rooms'));
     }
 

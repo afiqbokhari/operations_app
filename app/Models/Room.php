@@ -37,4 +37,10 @@ class Room extends Model
     {
         return $this->hasMany(BookingBreakoutRoom::class);
     }
+
+    public function scopeOrderedByType($query)
+    {
+        return $query->orderByRaw("FIELD(type, 'hearing_room', 'breakout_room', 'mediation_room', 'conference_room')")
+                     ->orderByRaw("LENGTH(room_code), room_code");
+    }
 }

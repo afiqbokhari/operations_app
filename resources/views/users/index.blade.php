@@ -85,11 +85,12 @@
                     </div>
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Role</label>
-                        <select name="role" x-model="form.role" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <option value="admin">Admin</option>
-                            <option value="manager">Manager</option>
-                            <option value="staff">Staff</option>
-                        </select>
+                        <input type="text" name="role" x-model="form.role" list="roleList" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <datalist id="roleList">
+                            @foreach($roles as $r)
+                                <option value="{{ $r }}">
+                            @endforeach
+                        </datalist>
                     </div>
                 </div>
                 <div class="flex justify-end space-x-2">

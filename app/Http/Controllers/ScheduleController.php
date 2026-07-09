@@ -15,7 +15,7 @@ class ScheduleController extends Controller
         $date = $request->get('date', Carbon::today()->toDateString());
         $view = $request->get('view', 'daily');
 
-        $rooms = Room::where('status', 'active')->orderBy('room_code')->get();
+        $rooms = Room::where('status', 'active')->orderedByType()->get();
 
         if ($view === 'daily') {
             $bookings = Booking::with(['room', 'case', 'participants.contact', 'features'])

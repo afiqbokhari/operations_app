@@ -23,19 +23,37 @@
                     <a href="/dashboard" class="text-xl font-bold text-gray-800 dark:text-white">AIAC Operations</a>
                 </div>
 
-                <div class="hidden md:flex items-center space-x-6">
-                    <a href="/dashboard" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Dashboard</a>
-                    <a href="/schedule" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Schedule</a>
-                    <a href="/rooms" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Rooms</a>
-                    <a href="/logs" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Logs</a>
-                    @if(auth()->user()?->role === 'admin')
-                    <a href="/users" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Users</a>
-                    <a href="/permissions" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Permissions</a>
-                    @endif
-                    <a href="/features" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Features</a>
-                    <a href="/bookings" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Bookings</a>
-                    <a href="/events" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Events</a>
-                    <a href="#" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Cases</a>
+                <div class="hidden md:flex items-center space-x-1">
+                    @php
+                        $navMenus = \App\Models\Menu::where('is_active', true)->whereNull('parent_id')->orderBy('order')->get();
+                    @endphp
+                    @foreach($navMenus as $menu)
+                        @if(!$menu->permission || \App\Models\Permission::can(auth()->user()->role, $menu->permission, 'view'))
+                            @if($menu->children->isNotEmpty())
+                                <div class="relative group">
+                                    <button class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium px-3 py-2 rounded flex items-center">
+                                        {{ $menu->label }}
+                                        <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                    </button>
+                                    <div class="absolute left-0 top-full mt-1 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 min-w-[180px]">
+                                        @foreach($menu->children as $child)
+                                            @if(!$child->permission || \App\Models\Permission::can(auth()->user()->role, $child->permission, 'view'))
+                                                <a href="{{ $child->route_name ? route($child->route_name) : '#' }}" 
+                                                   class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded first:rounded-t-lg last:rounded-b-lg">
+                                                    {{ $child->label }}
+                                                </a>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @else
+                                <a href="{{ $menu->route_name ? route($menu->route_name) : '#' }}" 
+                                   class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium px-3 py-2 rounded">
+                                    {{ $menu->label }}
+                                </a>
+                            @endif
+                        @endif
+                    @endforeach
                 </div>
 
                 <div class="hidden md:flex items-center space-x-4">
@@ -58,20 +76,27 @@
             </div>
         </div>
 
+        {{-- Mobile Menu --}}
         <div x-show="open" x-cloak class="md:hidden border-t border-gray-200 dark:border-gray-700">
             <div class="px-4 py-3 space-y-1">
-                <a href="/dashboard" @click="open = false" class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Dashboard</a>
-                <a href="/schedule" @click="open = false" class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Schedule</a>
-                <a href="/rooms" @click="open = false" class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Rooms</a>
-                <a href="/logs" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Logs</a>
-                    @if(auth()->user()?->role === 'admin')
-                    <a href="/users" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Users</a>
-                    <a href="/permissions" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Permissions</a>
+                @foreach($navMenus as $menu)
+                    @if(!$menu->permission || \App\Models\Permission::can(auth()->user()->role, $menu->permission, 'view'))
+                        <a href="{{ $menu->route_name ? route($menu->route_name) : '#' }}" @click="open = false" 
+                           class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            {{ $menu->label }}
+                        </a>
+                        @if($menu->children->isNotEmpty())
+                            @foreach($menu->children as $child)
+                                @if(!$child->permission || \App\Models\Permission::can(auth()->user()->role, $child->permission, 'view'))
+                                    <a href="{{ $child->route_name ? route($child->route_name) : '#' }}" @click="open = false"
+                                       class="block px-6 py-1.5 rounded text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 ml-4">
+                                        ↳ {{ $child->label }}
+                                    </a>
+                                @endif
+                            @endforeach
+                        @endif
                     @endif
-                    <a href="/features" @click="open = false" class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Features</a>
-                <a href="#" class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Bookings</a>
-                <a href="/events" @click="open = false" class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Events</a>
-                <a href="#" class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cases</a>
+                @endforeach
                 <hr class="my-2 dark:border-gray-700">
                 <div class="px-3 py-2">
                     <span class="text-sm text-gray-600 dark:text-gray-300">{{ Auth::user()->name }}</span>

@@ -12,7 +12,8 @@ class UserController extends Controller
     public function index()
     {
         $users = User::orderBy('name')->get();
-        return view('users.index', compact('users'));
+        $roles = User::distinct()->pluck('role')->toArray();
+        return view('users.index', compact('users', 'roles'));
     }
 
     public function store(Request $request)
@@ -21,7 +22,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6',
-            'role' => 'required|in:admin,manager,staff',
+            'role' => 'required|string|max:50',
         ]);
 
         User::create([
@@ -40,7 +41,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|min:6',
-            'role' => 'required|in:admin,manager,staff',
+            'role' => 'required|string|max:50',
         ]);
 
         $user->name = $validated['name'];
