@@ -4,7 +4,7 @@
 <div class="max-w-7xl mx-auto">
 
     <div class="mb-6">
-        <a href="{{ route('bookings.index') }}" class="text-blue-600 dark:text-blue-500 hover:underline">&larr; Back to Bookings</a>
+        <a href="javascript:history.back()" class="text-blue-600 dark:text-blue-500 hover:underline">← Back</a>
     </div>
 
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">New Booking</h1>

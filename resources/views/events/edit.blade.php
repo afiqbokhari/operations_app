@@ -4,7 +4,7 @@
 <div class="max-w-3xl mx-auto">
 
     <div class="mb-6">
-        <a href="{{ route('events.index') }}" class="text-blue-600 dark:text-blue-500 hover:underline">&larr; Back to Events</a>
+        <a href="javascript:history.back()" class="text-blue-600 dark:text-blue-500 hover:underline">← Back</a>
     </div>
 
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Edit Event: {{ $event->event_name }}</h1>
