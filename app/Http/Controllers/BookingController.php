@@ -33,7 +33,7 @@ class BookingController extends Controller
             ->when($request->date_to, function ($query, $date) {
                 $query->where('booking_date', '<=', $date);
             })
-            ->orderBy('booking_date', 'desc')
+            ->orderBy('created_at', 'desc')
             ->orderBy('start_time')
             ->paginate(20);
 

@@ -76,7 +76,8 @@
         }
 
         .room-breakout {
-            font-size: 7px;
+            font-size: 11px;
+            font-weight: bold;
             text-align: center;
             margin-top: 4px;
         }
@@ -159,10 +160,10 @@
             <tr>
                 <td>
                     <div class="room">{{ $b->room->room_code }}</div>
-                    <div class="room-session">{{ $vcr ?: $sessionLabel }}</div>
                     @if($b->breakoutRooms->isNotEmpty())
-                    <div class="room-breakout">BR: {{ $b->breakoutRooms->pluck('room.room_code')->implode(', ') }}</div>
+                    <div class="room-breakout">{{ $b->breakoutRooms->pluck('room.room_code')->implode(', ') }}</div>
                     @endif
+                    <div class="room-session">{{ $vcr ?: $sessionLabel }}</div>
                 </td>
                 <td>
                     <div class="party-name">{{ strtoupper($cl?->contact?->name ?? '-') }}</div>
