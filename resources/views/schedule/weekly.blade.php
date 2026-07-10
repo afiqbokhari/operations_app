@@ -66,6 +66,7 @@
     <div class="mb-4">
         <span class="text-lg font-semibold text-gray-700 dark:text-gray-300">
             {{ $startOfWeek->format('d M Y') }} - {{ $startOfWeek->copy()->endOfWeek()->format('d M Y') }}
+        <a href="{{ route('schedule.print-week', ['date' => $startOfWeek->toDateString()]) }}" class="text-sm text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 border px-3 py-1 rounded hover:border-blue-300" target="_blank">🖨 Print Week</a>
         </span>
     </div>
 

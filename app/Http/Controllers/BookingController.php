@@ -247,7 +247,7 @@ class BookingController extends Controller
     public function update(Request $request, Booking $booking)
     {
         $validated = $request->validate([
-            'booking_id' => 'required|string|unique:bookings,booking_id,' . $booking->id,
+            'booking_id' => 'required|string',
             'room_id' => 'required|exists:rooms,id',
             'booking_date' => 'required|date',
             'session_type' => 'required|in:full_day,half_am,half_pm',
@@ -355,7 +355,7 @@ class BookingController extends Controller
             }
         }
 
-        return redirect()->route('bookings.index')->with('success', 'Booking updated successfully.');
+        return redirect()->route('bookings.edit', $booking)->with('success', 'Booking updated successfully.');
     }
 
     public function destroy(Booking $booking)

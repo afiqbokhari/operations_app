@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ScheduleController extends Controller
 {
@@ -97,5 +98,37 @@ class ScheduleController extends Controller
         }
 
         return redirect()->route('schedule.index', ['view' => 'daily']);
+    }
+
+    public function printWeek(Request $request)
+    {
+        $date = $request->get('date', Carbon::today()->toDateString());
+        $startOfWeek = Carbon::parse($date)->startOfWeek(Carbon::MONDAY);
+        $endOfWeek = Carbon::parse($date)->endOfWeek(Carbon::SUNDAY);
+
+        $weekDays = [];
+        for ($i = 0; $i < 7; $i++) {
+            $weekDays[] = $startOfWeek->copy()->addDays($i);
+        }
+
+        $allBookings = Booking::with(['room', 'case', 'participants.contact', 'features'])
+            ->whereBetween('booking_date', [$startOfWeek, $endOfWeek])
+            ->where('booking_status', '!=', 'cancelled')
+            ->orderBy('start_time')
+            ->get()
+            ->groupBy(fn($b) => $b->booking_date->toDateString());
+
+        $allEvents = Event::with('room')
+            ->where('status', 'approved')
+            ->whereBetween('start_date', [$startOfWeek, $endOfWeek])
+            ->orderBy('start_time')
+            ->get()
+            ->groupBy(fn($e) => $e->start_date->toDateString());
+
+        $pdf = Pdf::loadView('schedule.print-week', compact(
+            'weekDays', 'allBookings', 'allEvents', 'startOfWeek'
+        ))->setPaper('a4', 'portrait');
+
+        return $pdf->stream('schedule-' . $startOfWeek->format('Y-m-d') . '-to-' . $endOfWeek->format('Y-m-d') . '.pdf');
     }
 }
