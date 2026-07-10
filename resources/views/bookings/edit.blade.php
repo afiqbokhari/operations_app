@@ -28,7 +28,7 @@
             {{ $selectedRoom->room_name }} ({{ $selectedRoom->room_code }}) —
             {{ match($session) { 'full_day' => 'Full Day (9:00-17:00)', 'half_am' => 'Half AM (9:00-13:00)', 'half_pm'
             => 'Half PM (14:00-17:00)', default => $session } }}
-            on {{ \Carbon\Carbon::parse($date)->format('d M Y') }}
+            on {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}
         </h2>
 
         <form action="{{ route('bookings.update', $booking) }}" method="POST" class="space-y-6">

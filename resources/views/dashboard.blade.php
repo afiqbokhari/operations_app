@@ -30,7 +30,7 @@
         {{-- Hearings --}}
         <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-5">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                Today's Hearings ({{ $today->format('d M Y') }})
+                Today's Hearings ({{ $today->format('d/m/Y') }})
             </h2>
             @if($todayBookings->isEmpty())
                 <p class="text-gray-500 dark:text-gray-400 text-sm">No hearings today.</p>

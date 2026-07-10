@@ -42,9 +42,9 @@
         <div class="flex justify-between items-center cursor-pointer" @click="showRooms = !showRooms">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 @if($size)
-                    {{ $sizeLabel }} Rooms for {{ \Carbon\Carbon::parse($date)->format('d M Y') }}
+                    {{ $sizeLabel }} Rooms for {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}
                 @else
-                    Rooms (≥ {{ $displayPax }} pax) for {{ \Carbon\Carbon::parse($date)->format('d M Y') }}
+                    Rooms (≥ {{ $displayPax }} pax) for {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}
                 @endif
             </h2>
             <span class="text-gray-500 text-sm" x-text="showRooms ? '▲ Hide' : '▼ Show'"></span>

@@ -49,7 +49,7 @@
                     <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $event->event_name }}</td>
                     <td class="px-4 py-3">{{ $event->room->room_code }}</td>
                     <td class="px-4 py-3 hidden md:table-cell text-xs">
-                        {{ $event->start_date->format('d M Y') }} - {{ $event->end_date->format('d M Y') }}
+                        {{ $event->start_date->format('d/m/Y') }} - {{ $event->end_date->format('d/m/Y') }}
                     </td>
                     <td class="px-4 py-3 hidden md:table-cell">{{ $event->organizer ?? '-' }}</td>
                     <td class="px-4 py-3">
