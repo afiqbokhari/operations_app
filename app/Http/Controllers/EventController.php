@@ -14,7 +14,9 @@ class EventController extends Controller
         $events = Event::with(['room', 'bookedBy', 'reviewedBy'])
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->when($request->search, fn($q, $s) => $q->where('event_name', 'like', "%{$s}%"))
-            ->orderBy('start_date', 'desc')
+            ->when($request->date_from, fn($q, $d) => $q->where('start_date', '>=', $d))
+            ->when($request->date_to, fn($q, $d) => $q->where('start_date', '<=', $d))
+            ->orderBy('created_at', 'desc')
             ->paginate(20);
 
         return view('events.index', compact('events'));
@@ -42,7 +44,6 @@ class EventController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        // Check conflicts with both bookings and events
         $conflict = $this->checkConflict(
             $validated['room_id'],
             $validated['start_date'],
@@ -99,6 +100,7 @@ class EventController extends Controller
 
     public function edit(Event $event)
     {
+        $event->load(['features', 'breakoutRooms.room']);
         $rooms = Room::where('status', 'active')->orderedByType()->get();
         return view('events.edit', compact('event', 'rooms'));
     }
@@ -153,7 +155,6 @@ class EventController extends Controller
 
     private function checkConflict($roomId, $startDate, $endDate, $startTime, $endTime, $excludeEventId = null)
     {
-        // Check bookings table
         $bookingConflict = \App\Models\Booking::where('room_id', $roomId)
             ->where('booking_status', '!=', 'cancelled')
             ->where('booking_date', '>=', $startDate)
@@ -164,7 +165,6 @@ class EventController extends Controller
 
         if ($bookingConflict) return true;
 
-        // Check events table (approved only)
         $eventConflict = Event::where('room_id', $roomId)
             ->when($excludeEventId, fn($q) => $q->where('id', '!=', $excludeEventId))
             ->where('status', 'approved')

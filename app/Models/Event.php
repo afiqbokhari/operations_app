@@ -5,13 +5,16 @@ namespace App\Models;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Event extends Model
 {
     use LogsActivity;
 
     protected $fillable = [
-        'event_name', 'room_id', 'start_date', 'end_date',
+        'event_name', 'event_type', 'reference_number',
+        'room_id', 'start_date', 'end_date',
         'start_time', 'end_time', 'organizer', 'attendees_count',
         'setup_needed', 'catering_needed', 'notes',
         'status', 'booked_by', 'reviewed_by', 'reviewed_at', 'reject_reason',
@@ -38,5 +41,15 @@ class Event extends Model
     public function reviewedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function features(): BelongsToMany
+    {
+        return $this->belongsToMany(Feature::class, 'event_features')->withTimestamps();
+    }
+
+    public function breakoutRooms(): HasMany
+    {
+        return $this->hasMany(EventBreakoutRoom::class);
     }
 }
