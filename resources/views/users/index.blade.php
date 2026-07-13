@@ -34,10 +34,11 @@
                     <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">{{ $user->name }}</td>
                     <td class="px-6 py-4">{{ $user->email }}</td>
                     <td class="px-6 py-4">
-                        <span class="px-2 py-1 text-xs font-medium rounded
+                        <span class="inline-block w-20 text-center px-2 py-1 text-xs font-medium rounded
                             {{ $user->role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' : '' }}
                             {{ $user->role === 'manager' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' : '' }}
-                            {{ $user->role === 'staff' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : '' }}">
+                            {{ $user->role === 'staff' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : '' }}
+                            {{ !in_array($user->role, ['admin','manager','staff']) ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' : '' }}">
                             {{ ucfirst($user->role) }}
                         </span>
                     </td>
