@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             RoomSeeder::class,
             RoomFeatureSeeder::class,
             UserSeeder::class,
+            MenuStructureSeeder::class,
         ]);
     }
 }
