@@ -12,7 +12,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::orderBy('name')->get();
-        $roles = User::distinct()->pluck('role')->toArray();
+        $roles = \DB::table('permissions')->orderBy('role')->pluck('role')->toArray();
         return view('users.index', compact('users', 'roles'));
     }
 

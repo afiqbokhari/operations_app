@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             RoomFeatureSeeder::class,
             UserSeeder::class,
             MenuStructureSeeder::class,
+            RoleAndPermissionSeeder::class,
         ]);
     }
 }

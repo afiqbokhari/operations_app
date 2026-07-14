@@ -101,5 +101,45 @@
             </form>
         </div>
     </div>
+
+    {{-- Roles Section --}}
+    <div class="mt-8">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Roles</h2>
+        <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th class="px-6 py-3">Role</th>
+                        <th class="px-6 py-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($roles as $role)
+                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">{{ $role }}</td>
+                        <td class="px-6 py-4">
+                            @if(!in_array(strtolower($role), ['administrator', 'admin', 'manager', 'staff']))
+                            <form action="{{ route('roles.destroy', $role) }}" method="POST" onsubmit="return confirm('Delete role {{ $role }}?')" class="inline">
+                                @csrf @method('DELETE')
+                                <button class="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 border border-red-200 rounded-lg hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:border-red-700 dark:hover:bg-red-800">Delete</button>
+                            </form>
+                            @else
+                            <span class="text-xs text-gray-400">Protected</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            <div class="p-4 border-t dark:border-gray-700">
+                <form action="{{ route('roles.store') }}" method="POST" class="flex gap-2">
+                    @csrf
+                    <input type="text" name="role" placeholder="New role name (e.g. BD Executive)" required
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-4 py-2">Add Role</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
