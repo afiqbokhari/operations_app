@@ -34,7 +34,17 @@
         <form action="{{ route('bookings.update', $booking) }}" method="POST" class="space-y-6">
             @csrf
             @method('PUT')
-            <input type="hidden" name="room_id" value="{{ $selectedRoom->id }}">
+            <div class="mb-4">
+                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Room</label>
+                <select name="room_id" required {{ $viewMode ? 'disabled' : '' }}
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white {{ $viewMode ? 'opacity-70 cursor-not-allowed' : '' }}">
+                    @foreach(\App\Models\Room::where('status', 'active')->orderedByType()->get() as $r)
+                        <option value="{{ $r->id }}" {{ $selectedRoom->id == $r->id ? 'selected' : '' }}>
+                            {{ $r->room_code }} - {{ $r->room_name }} ({{ $r->capacity }} pax)
+                        </option>
+                    @endforeach
+                </select>
+            </div>
             <input type="hidden" name="session_type" value="{{ $session }}">
             <input type="hidden" name="booking_date" value="{{ $date }}">
 

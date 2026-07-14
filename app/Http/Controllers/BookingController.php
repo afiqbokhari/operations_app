@@ -10,6 +10,7 @@ use App\Models\Feature;
 use App\Models\BookingParticipant;
 use App\Models\BookingFeature;
 use App\Models\BookingBreakoutRoom;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -278,7 +279,7 @@ class BookingController extends Controller
             ->where('id', '!=', $booking->id)
             ->where(function ($q) use ($times) {
                 $q->where('start_time', '<', $times[1])
-                  ->where('end_time', '>', $times[0]);
+                ->where('end_time', '>', $times[0]);
             })
             ->exists();
 
@@ -299,20 +300,33 @@ class BookingController extends Controller
             return Contact::firstOrCreate(['name' => $name], ['type' => 'individual']);
         };
 
-        $booking->update([
-            'booking_id' => $validated['booking_id'],
-            'case_id' => $case?->id,
-            'room_id' => $validated['room_id'],
-            'booking_date' => $validated['booking_date'],
-            'session_type' => $validated['session_type'],
-            'start_time' => $times[0],
-            'end_time' => $times[1],
-            'number_of_attendees' => $validated['number_of_attendees'],
-            'booking_status' => $validated['booking_status'],
-            'special_requirements' => $validated['special_requirements'],
-            'internal_notes' => $validated['internal_notes'],
-        ]);
+        $changes = [];
 
+        // Features
+        $oldFeatures = $booking->features->pluck('name')->sort()->values()->toArray();
+        $booking->features()->sync($validated['features'] ?? []);
+        $newFeatures = $booking->features()->pluck('name')->sort()->values()->toArray();
+        $change = \App\Services\ActivityLogger::compare($oldFeatures, $newFeatures, 'Features');
+        if ($change) $changes[] = $change;
+
+        // Breakout rooms
+        $oldBR = $booking->breakoutRooms->pluck('room.room_code')->sort()->values()->toArray();
+        $booking->breakoutRooms()->delete();
+        if (!empty($validated['breakout_rooms'])) {
+            $validated['breakout_rooms'] = array_filter($validated['breakout_rooms']);
+            foreach ($validated['breakout_rooms'] as $breakoutRoomId) {
+                if ($breakoutRoomId) {
+                    BookingBreakoutRoom::create(['booking_id' => $booking->id, 'room_id' => $breakoutRoomId]);
+                }
+            }
+        }
+        $newBR = \App\Models\BookingBreakoutRoom::where('booking_id', $booking->id)
+            ->with('room')->get()->pluck('room.room_code')->sort()->values()->toArray();
+        $change = \App\Services\ActivityLogger::compare($oldBR, $newBR, 'Breakout Rooms');
+        if ($change) $changes[] = $change;
+
+        // Participants
+        $oldParticipants = $booking->participants->map(fn($p) => $p->role . ': ' . $p->contact->name)->sort()->values()->toArray();
         $booking->participants()->delete();
 
         if ($contact = $findOrCreateContact($validated['claimant'])) {
@@ -344,15 +358,27 @@ class BookingController extends Controller
             }
         }
 
-        $booking->features()->sync($validated['features'] ?? []);
-        $booking->breakoutRooms()->delete();
+        $booking->load('participants.contact');
+        $newParticipants = $booking->participants->map(fn($p) => $p->role . ': ' . $p->contact->name)->sort()->values()->toArray();
+        $change = \App\Services\ActivityLogger::compare($oldParticipants, $newParticipants, 'Participants');
+        if ($change) $changes[] = $change;
 
-        if (!empty($validated['breakout_rooms'])) {
-            foreach ($validated['breakout_rooms'] as $breakoutRoomId) {
-                if ($breakoutRoomId) {
-                    BookingBreakoutRoom::create(['booking_id' => $booking->id, 'room_id' => $breakoutRoomId]);
-                }
-            }
+        $booking->update([
+            'booking_id' => $validated['booking_id'],
+            'case_id' => $case?->id,
+            'room_id' => $validated['room_id'],
+            'booking_date' => $validated['booking_date'],
+            'session_type' => $validated['session_type'],
+            'start_time' => $times[0],
+            'end_time' => $times[1],
+            'number_of_attendees' => $validated['number_of_attendees'],
+            'booking_status' => $validated['booking_status'],
+            'special_requirements' => $validated['special_requirements'],
+            'internal_notes' => $validated['internal_notes'],
+        ]);
+
+        if (!empty($changes)) {
+            \App\Services\ActivityLogger::log('Booking', $booking->id, 'updated', $changes);
         }
 
         return redirect()->route('bookings.edit', $booking)->with('success', 'Booking updated successfully.');
