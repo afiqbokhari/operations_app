@@ -111,9 +111,10 @@
 
                 <div class="hidden md:flex items-center space-x-1">
                     @php
-                    $navMenus = \App\Models\Menu::where('is_active',
-                    true)->whereNull('parent_id')->orderBy('order')->get();
-                    @endphp
+                    $currentModule = session('module', 'bookings');
+                    $navMenus = \App\Models\Menu::where('is_active', true)
+                        ->where('module', $currentModule)
+                        ->whereNull('parent_id')->orderBy('order')->get();
                     @foreach($navMenus as $menu)
                     @if(!$menu->permission || \App\Models\Permission::can(auth()->user()->role, $menu->permission,
                     'view'))
@@ -226,6 +227,14 @@
                             </a>
                         </div>
                     </div>
+                    <form action="{{ route('module.switch') }}" method="POST" class="flex items-center">
+                        @csrf
+                        <input type="hidden" name="module" value="{{ $currentModule === 'bookings' ? 'front_desk' : 'bookings' }}">
+                        <button class="px-3 py-1 text-xs font-medium rounded border 
+                            {{ $currentModule === 'bookings' ? 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300' : 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-300' }}">
+                            {{ $currentModule === 'bookings' ? 'Bookings' : 'Front Desk' }}
+                        </button>
+                    </form>
                     <button @click="dark = !dark"
                         class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">🌓</button>
                     <span class="text-sm text-gray-600 dark:text-gray-300">{{ Auth::user()->name }}</span>
