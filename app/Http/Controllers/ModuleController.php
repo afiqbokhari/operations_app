@@ -10,6 +10,12 @@ class ModuleController extends Controller
     {
         $module = $request->module;
         session(['module' => $module]);
-        return back();
+
+        $redirects = [
+            'bookings' => route('dashboard'),
+            'front_desk' => route('front-desk.mail.index'),
+        ];
+
+        return redirect($redirects[$module] ?? route('dashboard'));
     }
 }

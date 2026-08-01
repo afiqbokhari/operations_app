@@ -12,6 +12,8 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\FrontDeskItemController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -23,10 +25,21 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
 Route::middleware('auth')->group(function () {
     Route::get('/search', [SearchController::class, 'index'])->name('search.index');
-
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/module/switch', [ModuleController::class, 'switch'])->name('module.switch');
+
+    // Front Desk - Mail Log
+    Route::prefix('front-desk')->name('front-desk.')->middleware('role:front_desk,auto')->group(function () {
+        Route::get('/mail', [FrontDeskItemController::class, 'index'])->name('mail.index');
+        Route::get('/mail/create', [FrontDeskItemController::class, 'create'])->name('mail.create');
+        Route::post('/mail', [FrontDeskItemController::class, 'store'])->name('mail.store');
+        Route::get('/mail/{frontDeskItem}/edit', [FrontDeskItemController::class, 'edit'])->name('mail.edit');
+        Route::put('/mail/{frontDeskItem}', [FrontDeskItemController::class, 'update'])->name('mail.update');
+        Route::delete('/mail/{frontDeskItem}', [FrontDeskItemController::class, 'destroy'])->name('mail.destroy');
+        Route::post('/mail/batch-collect', [FrontDeskItemController::class, 'batchCollect'])->name('mail.batch-collect');
+    });
 
     // Rooms
     Route::middleware('role:rooms,auto')->group(function () {

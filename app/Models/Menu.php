@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Menu extends Model
 {
-    protected $fillable = ['label', 'route_name', 'parent_id', 'order', 'permission', 'icon', 'is_active'];
+    protected $fillable = ['label', 'route_name', 'parent_id', 'order', 'permission', 'icon', 'is_active', 'module'];
 
     protected $casts = ['is_active' => 'bool'];
 

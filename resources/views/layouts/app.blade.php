@@ -115,6 +115,7 @@
                     $navMenus = \App\Models\Menu::where('is_active', true)
                         ->where('module', $currentModule)
                         ->whereNull('parent_id')->orderBy('order')->get();
+                    @endphp
                     @foreach($navMenus as $menu)
                     @if(!$menu->permission || \App\Models\Permission::can(auth()->user()->role, $menu->permission,
                     'view'))
@@ -227,14 +228,46 @@
                             </a>
                         </div>
                     </div>
-                    <form action="{{ route('module.switch') }}" method="POST" class="flex items-center">
-                        @csrf
-                        <input type="hidden" name="module" value="{{ $currentModule === 'bookings' ? 'front_desk' : 'bookings' }}">
-                        <button class="px-3 py-1 text-xs font-medium rounded border 
-                            {{ $currentModule === 'bookings' ? 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300' : 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-300' }}">
-                            {{ $currentModule === 'bookings' ? 'Bookings' : 'Front Desk' }}
+                    @php
+                        $availableModules = [];
+                        if (\App\Models\Permission::can(auth()->user()->role, 'bookings', 'view')) {
+                            $availableModules[] = ['id' => 'bookings', 'label' => '📋 Bookings'];
+                        }
+                        if (\App\Models\Permission::can(auth()->user()->role, 'front_desk', 'view')) {
+                            $availableModules[] = ['id' => 'front_desk', 'label' => '🛎️ Front Desk'];
+                        }
+                        $currentModuleLabel = '';
+                        foreach ($availableModules as $mod) {
+                            if ($mod['id'] === $currentModule) {
+                                $currentModuleLabel = $mod['label'];
+                                break;
+                            }
+                        }
+                        if (!$currentModuleLabel && count($availableModules) > 0) {
+                            $currentModuleLabel = $availableModules[0]['label'];
+                        }
+                    @endphp
+
+                    @if(count($availableModules) > 1)
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" @click.away="open = false"
+                            class="px-3 py-1.5 text-xs font-medium rounded border bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
+                            {{ $currentModuleLabel }}
+                            <svg class="w-3 h-3 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                    </form>
+                        <div x-show="open" class="absolute top-full right-0 mt-1 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg z-50 w-36">
+                            @foreach($availableModules as $mod)
+                            <form action="{{ route('module.switch') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="module" value="{{ $mod['id'] }}">
+                                <button class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg {{ $currentModule === $mod['id'] ? 'font-bold text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300' }}">
+                                    {{ $mod['label'] }}
+                                </button>
+                            </form>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
                     <button @click="dark = !dark"
                         class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">🌓</button>
                     <span class="text-sm text-gray-600 dark:text-gray-300">{{ Auth::user()->name }}</span>

@@ -9,12 +9,13 @@ class RoleAndPermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        $routeGroups = ['users', 'rooms', 'bookings', 'features', 'schedule', 'logs', 'permissions', 'events', 'menus'];
+        $routeGroups = ['users', 'rooms', 'bookings', 'features', 'schedule', 'logs', 'permissions', 'events', 'menus', 'front_desk'];
         $allAccess = ['view', 'create', 'edit', 'delete'];
         $limitedAccess = ['view', 'create', 'edit'];
         $viewOnly = ['view'];
 
         $roles = [
+            'admin' => $allAccess,
             'bd user' => array_fill_keys($routeGroups, $viewOnly),
             'ops user' => $limitedAccess,
             'cofreth hk' => $viewOnly,
