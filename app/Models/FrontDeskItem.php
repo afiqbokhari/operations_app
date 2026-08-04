@@ -14,7 +14,7 @@ class FrontDeskItem extends Model
     protected $fillable = [
         'date_received',
         'batch_name',
-        'received_from',
+        'contact_id',
         'address_to',
         'letter_date',
         'matter_id',
@@ -33,6 +33,11 @@ class FrontDeskItem extends Model
         'doc_type' => 'array',
         'collected_at' => 'datetime',
     ];
+
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(FrontDeskContact::class);
+    }
 
     public function matter(): BelongsTo
     {

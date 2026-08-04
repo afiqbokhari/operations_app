@@ -49,7 +49,7 @@
                         filteredContacts: []
                     }" class="relative">
                         <input type="text" 
-                            name="received_from" 
+                            name="contact_name"
                             id="received_from" 
                             x-model="selected"
                             @input.debounce.200ms="
@@ -100,7 +100,7 @@
                             </div>
                         </div>
                     </div>
-                    @error('received_from')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    @error('contact_name')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
 
                 {{-- Address To --}}
@@ -133,6 +133,7 @@
                         filteredMatters: []
                     }" class="relative">
                         <input type="hidden" name="matter_id" :value="selectedId">
+                        <input type="hidden" name="matter_name" :value="selectedName">
                         <input type="text" 
                             x-model="selectedName"
                             @input.debounce.200ms="

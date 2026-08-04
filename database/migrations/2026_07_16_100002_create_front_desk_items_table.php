@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->date('date_received');
             $table->string('batch_name')->nullable();
-            $table->string('received_from');
+            $table->foreignId('contact_id')->constrained('front_desk_contacts')->onDelete('restrict');
             $table->string('address_to');
             $table->date('letter_date')->nullable();
             $table->foreignId('matter_id')->nullable()->constrained('front_desk_matters')->onDelete('restrict');
@@ -25,9 +25,9 @@ return new class extends Migration
             $table->foreignId('logged_by')->constrained('users')->onDelete('restrict');
             $table->softDeletes();
             $table->timestamps();
-
             $table->index('date_received');
             $table->index('batch_name');
+            $table->index('contact_id');
             $table->index('matter_id');
             $table->index('collected_by');
             $table->index('received_via');

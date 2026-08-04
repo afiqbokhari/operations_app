@@ -16,11 +16,13 @@ class FrontDeskItemController extends Controller
         $pendingPickups = FrontDeskItem::pendingPickup()->count();
         $agingItems = FrontDeskItem::aging()->count();
 
-        $items = FrontDeskItem::with(['matter', 'collectedBy', 'loggedBy'])
+        $items = FrontDeskItem::with(['contact', 'matter', 'collectedBy', 'loggedBy'])
             ->when($request->search, function ($query, $search) {
-                $query->where('received_from', 'like', "%{$search}%")
-                    ->orWhere('address_to', 'like', "%{$search}%")
+                $query->where('address_to', 'like', "%{$search}%")
                     ->orWhere('batch_name', 'like', "%{$search}%")
+                    ->orWhereHas('contact', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
                     ->orWhereHas('matter', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     });
@@ -57,7 +59,7 @@ class FrontDeskItemController extends Controller
         $monthCount = FrontDeskItem::whereBetween('date_received', [now()->startOfMonth(), now()->endOfMonth()])
             ->count();
 
-        $recentItems = FrontDeskItem::with(['matter', 'collectedBy', 'loggedBy'])
+        $recentItems = FrontDeskItem::with(['contact', 'matter', 'collectedBy', 'loggedBy'])
             ->orderBy('date_received', 'desc')
             ->orderBy('created_at', 'desc')
             ->limit(8)
@@ -78,16 +80,32 @@ class FrontDeskItemController extends Controller
     {
         $validated = $request->validate([
             'date_received' => 'required|date',
-            'received_from' => 'required|string|max:255',
+            'contact_name' => 'required|string|max:255',
             'address_to' => 'required|string|max:255',
             'letter_date' => 'nullable|date',
-            'matter_id' => 'nullable|exists:front_desk_matters,id',
+            'matter_name' => 'nullable|string|max:255',
             'received_via' => 'required|in:Hand Delivery,Courier,Post',
             'doc_type' => 'required|array',
             'doc_type.*' => 'string|max:100',
             'details' => 'nullable|string',
             'remarks' => 'nullable|string',
         ]);
+
+        // Find or create contact
+        $contact = FrontDeskContact::firstOrCreate(
+            ['name' => $validated['contact_name']]
+        );
+        $validated['contact_id'] = $contact->id;
+        unset($validated['contact_name']);
+
+        // Find or create matter (if provided)
+        if (!empty($validated['matter_name'])) {
+            $matter = FrontDeskMatter::firstOrCreate(
+                ['name' => $validated['matter_name']]
+            );
+            $validated['matter_id'] = $matter->id;
+        }
+        unset($validated['matter_name']);
 
         $validated['doc_type'] = array_values(array_filter($validated['doc_type'], function($value) {
             return !empty(trim($value));
@@ -97,7 +115,7 @@ class FrontDeskItemController extends Controller
         $item = FrontDeskItem::create($validated);
 
         ActivityLogger::log('FrontDeskItem', $item->id, 'created', [
-            'Received: ' . $validated['received_from'],
+            'Received from: ' . $contact->name,
             'To: ' . $validated['address_to'],
             'Via: ' . $validated['received_via'],
         ]);
@@ -108,7 +126,7 @@ class FrontDeskItemController extends Controller
 
     public function show(FrontDeskItem $frontDeskItem)
     {
-        $frontDeskItem->load(['matter', 'collectedBy', 'loggedBy']);
+        $frontDeskItem->load(['contact', 'matter', 'collectedBy', 'loggedBy']);
 
         return view('front-desk.show', compact('frontDeskItem'));
     }
@@ -117,7 +135,7 @@ class FrontDeskItemController extends Controller
     {
         $matters = FrontDeskMatter::select('id', 'name')->orderBy('name')->get();
         $contacts = FrontDeskContact::select('id', 'name', 'company')->orderBy('name')->get();
-        $frontDeskItem->load(['matter', 'collectedBy', 'loggedBy']);
+        $frontDeskItem->load(['contact', 'matter', 'collectedBy', 'loggedBy']);
 
         return view('front-desk.edit', compact('frontDeskItem', 'matters', 'contacts'));
     }
@@ -126,16 +144,34 @@ class FrontDeskItemController extends Controller
     {
         $validated = $request->validate([
             'date_received' => 'required|date',
-            'received_from' => 'required|string|max:255',
+            'contact_name' => 'required|string|max:255',
             'address_to' => 'required|string|max:255',
             'letter_date' => 'nullable|date',
-            'matter_id' => 'nullable|exists:front_desk_matters,id',
+            'matter_name' => 'nullable|string|max:255',
             'received_via' => 'required|in:Hand Delivery,Courier,Post',
             'doc_type' => 'required|array',
             'doc_type.*' => 'string|max:100',
             'details' => 'nullable|string',
             'remarks' => 'nullable|string',
         ]);
+
+        // Find or create contact
+        $contact = FrontDeskContact::firstOrCreate(
+            ['name' => $validated['contact_name']]
+        );
+        $validated['contact_id'] = $contact->id;
+        unset($validated['contact_name']);
+
+        // Find or create matter (if provided)
+        if (!empty($validated['matter_name'])) {
+            $matter = FrontDeskMatter::firstOrCreate(
+                ['name' => $validated['matter_name']]
+            );
+            $validated['matter_id'] = $matter->id;
+        } else {
+            $validated['matter_id'] = null;
+        }
+        unset($validated['matter_name']);
 
         $validated['doc_type'] = array_values(array_filter($validated['doc_type'], function($value) {
             return !empty(trim($value));
@@ -209,7 +245,7 @@ class FrontDeskItemController extends Controller
         ]);
 
         ActivityLogger::log('FrontDeskItem', $frontDeskItem->id, 'collected', [
-            'Collected: ' . $frontDeskItem->received_from,
+            'Collected: ' . $frontDeskItem->contact->name,
             'To: ' . $frontDeskItem->address_to,
         ]);
 
@@ -229,7 +265,7 @@ class FrontDeskItemController extends Controller
         ]);
 
         ActivityLogger::log('FrontDeskItem', $frontDeskItem->id, 'undo_collected', [
-            'Undo collection: ' . $frontDeskItem->received_from,
+            'Undo collection: ' . $frontDeskItem->contact->name,
             'To: ' . $frontDeskItem->address_to,
         ]);
 

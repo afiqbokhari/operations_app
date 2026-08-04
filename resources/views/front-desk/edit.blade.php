@@ -43,17 +43,17 @@
                 <div>
                     <label for="received_from" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Received From *</label>
                     @if($viewing)
-                        <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->received_from }}</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->contact?->name ?? $frontDeskItem->received_from ?? '-' }}</p>
                     @else
                         <div x-data="{ 
                             open: false, 
                             search: '', 
-                            selected: '{{ addslashes(old('received_from', $frontDeskItem->received_from)) }}',
+                            selected: '{{ addslashes(old('contact_name', $frontDeskItem->contact?->name ?? $frontDeskItem->received_from ?? '')) }}',
                             contacts: {{ Js::from($contacts->map(fn($c) => ['name' => $c->name, 'company' => $c->company])) }},
                             filteredContacts: []
                         }" class="relative">
                             <input type="text" 
-                                name="received_from" 
+                                name="contact_name"
                                 id="received_from" 
                                 x-model="selected"
                                 @input.debounce.200ms="
@@ -105,7 +105,7 @@
                             </div>
                         </div>
                     @endif
-                    @error('received_from')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    @error('contact_name')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
 
                 {{-- Address To --}}
@@ -142,6 +142,7 @@
                             filteredMatters: []
                         }" class="relative">
                             <input type="hidden" name="matter_id" :value="selectedId">
+                            <input type="hidden" name="matter_name" :value="selectedName">
                             <input type="text" 
                                 x-model="selectedName"
                                 @input.debounce.200ms="

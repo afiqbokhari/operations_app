@@ -67,7 +67,7 @@
     {{-- Batch Pickup Button --}}
     <div class="mb-4" x-show="selectedCount > 0" x-cloak>
         <form action="{{ route('front-desk.mail.batch-collect') }}" method="POST"
-            onsubmit="return confirm('Mark {{ $pendingPickups }} selected item(s) as collected?');"
+            onsubmit="return confirm('Mark selected item(s) as collected?');"
             class="inline-flex items-center gap-2">
             @csrf
             <template x-for="id in selectedItems" :key="id">
@@ -113,7 +113,7 @@
                         @endif
                     </td>
                     <td class="px-4 py-3 hidden lg:table-cell text-xs">{{ $item->date_received->format('d/m/y') }}</td>
-                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $item->received_from }}</td>
+                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $item->contact?->name ?? $item->received_from ?? '-' }}</td>
                     <td class="px-4 py-3">{{ $item->address_to }}</td>
                     <td class="px-4 py-3 hidden md:table-cell">
                         <div class="flex flex-wrap gap-1">

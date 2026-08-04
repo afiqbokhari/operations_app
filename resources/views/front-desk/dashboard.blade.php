@@ -53,7 +53,7 @@
                         class="block p-3 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
                         <div class="flex justify-between items-start">
                             <div>
-                                <span class="font-medium text-gray-900 dark:text-white">{{ $item->received_from }} → {{ $item->address_to }}</span>
+                                <span class="font-medium text-gray-900 dark:text-white">{{ $item->contact?->name ?? $item->received_from ?? '-' }} → {{ $item->address_to }}</span>
                                 <span class="text-xs text-gray-500 ml-2">{{ $item->date_received->format('d/m/y') }}</span>
                             </div>
                             <span class="px-2 py-0.5 rounded text-xs font-medium {{ $item->collected_by ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' }}">

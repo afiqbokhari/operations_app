@@ -93,7 +93,7 @@
             </div>
             <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Received From</p>
-                <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->received_from }}</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->contact?->name ?? $frontDeskItem->received_from ?? '-' }}</p>
             </div>
             <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Address To</p>
