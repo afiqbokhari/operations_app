@@ -13,7 +13,7 @@ class ModuleController extends Controller
 
         $redirects = [
             'bookings' => route('dashboard'),
-            'front_desk' => route('front-desk.mail.index'),
+            'front_desk' => route('front-desk.dashboard'),
         ];
 
         return redirect($redirects[$module] ?? route('dashboard'));

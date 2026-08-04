@@ -6,13 +6,15 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $users = User::orderBy('name')->get();
-        $roles = \DB::table('permissions')->orderBy('role')->pluck('role')->toArray();
+        $users = User::with('roles')->orderBy('name')->get();
+        $roles = Role::orderBy('name')->get();
+
         return view('users.index', compact('users', 'roles'));
     }
 
@@ -25,12 +27,12 @@ class UserController extends Controller
             'role' => 'required|string|max:50',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
         ]);
+        $user->assignRole($validated['role']);
 
         return redirect()->route('users.index')->with('success', 'User created.');
     }
@@ -46,11 +48,11 @@ class UserController extends Controller
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
-        $user->role = $validated['role'];
         if ($validated['password']) {
             $user->password = Hash::make($validated['password']);
         }
         $user->save();
+        $user->syncRoles([$validated['role']]);
 
         return redirect()->route('users.index')->with('success', 'User updated.');
     }
@@ -61,6 +63,7 @@ class UserController extends Controller
             return back()->with('error', 'Cannot delete yourself.');
         }
         $user->delete();
+
         return redirect()->route('users.index')->with('success', 'User deleted.');
     }
 }

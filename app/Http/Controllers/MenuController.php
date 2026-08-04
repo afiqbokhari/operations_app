@@ -11,7 +11,7 @@ class MenuController extends Controller
     {
         $menus = Menu::with('children')->whereNull('parent_id')->orderBy('order')->get();
         $allMenus = Menu::orderBy('label')->get();
-        $permissions = ['schedule', 'rooms', 'features', 'bookings', 'events', 'logs', 'users', 'permissions', 'menus'];
+        $permissions = ['schedule', 'rooms', 'features', 'bookings', 'events', 'logs', 'users', 'permissions', 'menus', 'front_desk'];
         return view('menus.index', compact('menus', 'allMenus', 'permissions'));
     }
 

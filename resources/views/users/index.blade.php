@@ -35,16 +35,16 @@
                     <td class="px-6 py-4">{{ $user->email }}</td>
                     <td class="px-6 py-4">
                         <span class="inline-block w-20 text-center px-2 py-1 text-xs font-medium rounded
-                            {{ $user->role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' : '' }}
-                            {{ $user->role === 'manager' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' : '' }}
-                            {{ $user->role === 'staff' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : '' }}
-                            {{ !in_array($user->role, ['admin','manager','staff']) ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' : '' }}">
-                            {{ ucfirst($user->role) }}
+                            {{ $user->getRoleNames()->first() === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' : '' }}
+                            {{ $user->getRoleNames()->first() === 'manager' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' : '' }}
+                            {{ $user->getRoleNames()->first() === 'staff' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : '' }}
+                            {{ !in_array($user->getRoleNames()->first(), ['admin','manager','staff']) ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' : '' }}">
+                            {{ ucfirst($user->getRoleNames()->first() ?? '') }}
                         </span>
                     </td>
                     <td class="px-6 py-4">
                         <div class="inline-flex rounded-md shadow-sm" role="group">
-                            <button @click="open = true; editMode = true; userId = {{ $user->id }}; form = { name: '{{ $user->name }}', email: '{{ $user->email }}', password: '', role: '{{ $user->role }}' }" class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-s-lg hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-blue-800">Edit</button>
+                            <button @click="open = true; editMode = true; userId = {{ $user->id }}; form = { name: '{{ $user->name }}', email: '{{ $user->email }}', password: '', role: '{{ $user->getRoleNames()->first() }}' }" class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-s-lg hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-blue-800">Edit</button>
                             <form action="{{ route('users.destroy', $user) }}" method="POST" onsubmit="return confirm('Delete this user?')" class="inline">
                                 @csrf @method('DELETE')
                                 <button class="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 border border-red-200 rounded-e-lg hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:border-red-700 dark:hover:bg-red-800">Delete</button>
@@ -66,7 +66,7 @@
                     <svg class="w-3 h-3" fill="none" viewBox="0 0 14 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/></svg>
                 </button>
             </div>
-            <form :action="editMode ? '/users/' + userId : '/users'" method="POST" class="p-4 md:p-5">
+            <form :action="editMode ? '/admin/users/' + userId : '/admin/users'" method="POST" class="p-4 md:p-5">
                 @csrf
                 <template x-if="editMode">
                     <input type="hidden" name="_method" value="PUT">
@@ -86,12 +86,12 @@
                     </div>
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Role</label>
-                        <input type="text" name="role" x-model="form.role" list="roleList" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <datalist id="roleList">
+                        <select name="role" x-model="form.role" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="" disabled>Select a role</option>
                             @foreach($roles as $r)
-                                <option value="{{ $r }}">
+                                <option value="{{ $r->name }}">{{ $r->name }}</option>
                             @endforeach
-                        </datalist>
+                        </select>
                     </div>
                 </div>
                 <div class="flex justify-end space-x-2">
@@ -116,10 +116,10 @@
                 <tbody>
                     @foreach($roles as $role)
                     <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">{{ $role }}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">{{ $role->name }}</td>
                         <td class="px-6 py-4">
-                            @if(!in_array(strtolower($role), ['administrator', 'admin', 'manager', 'staff']))
-                            <form action="{{ route('roles.destroy', $role) }}" method="POST" onsubmit="return confirm('Delete role {{ $role }}?')" class="inline">
+                            @if(!in_array(strtolower($role->name), ['administrator', 'admin', 'manager', 'staff']))
+                            <form action="{{ route('roles.destroy', $role->name) }}" method="POST" onsubmit="return confirm('Delete role {{ $role->name }}?')" class="inline">
                                 @csrf @method('DELETE')
                                 <button class="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 border border-red-200 rounded-lg hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:border-red-700 dark:hover:bg-red-800">Delete</button>
                             </form>

@@ -49,6 +49,23 @@ class FrontDeskItemController extends Controller
         return view('front-desk.index', compact('items', 'todayCount', 'pendingPickups', 'agingItems'));
     }
 
+    public function dashboard()
+    {
+        $todayCount = FrontDeskItem::today()->count();
+        $pendingPickups = FrontDeskItem::pendingPickup()->count();
+        $agingItems = FrontDeskItem::aging()->count();
+        $monthCount = FrontDeskItem::whereBetween('date_received', [now()->startOfMonth(), now()->endOfMonth()])
+            ->count();
+
+        $recentItems = FrontDeskItem::with(['matter', 'collectedBy', 'loggedBy'])
+            ->orderBy('date_received', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->limit(8)
+            ->get();
+
+        return view('front-desk.dashboard', compact('todayCount', 'pendingPickups', 'agingItems', 'monthCount', 'recentItems'));
+    }
+
     public function create()
     {
         $matters = FrontDeskMatter::orderBy('name')->get();
@@ -72,7 +89,9 @@ class FrontDeskItemController extends Controller
             'remarks' => 'nullable|string',
         ]);
 
-        $validated['doc_type'] = $validated['doc_type']; // already an array
+        $validated['doc_type'] = array_values(array_filter($validated['doc_type'], function($value) {
+            return !empty(trim($value));
+        }));
         $validated['logged_by'] = auth()->id();
 
         $item = FrontDeskItem::create($validated);
@@ -87,10 +106,18 @@ class FrontDeskItemController extends Controller
             ->with('success', 'Mail/package logged successfully.');
     }
 
+    public function show(FrontDeskItem $frontDeskItem)
+    {
+        $frontDeskItem->load(['matter', 'collectedBy', 'loggedBy']);
+
+        return view('front-desk.show', compact('frontDeskItem'));
+    }
+
     public function edit(FrontDeskItem $frontDeskItem)
     {
         $matters = FrontDeskMatter::orderBy('name')->get();
         $contacts = FrontDeskContact::orderBy('name')->get();
+        $frontDeskItem->load(['matter', 'collectedBy', 'loggedBy']);
 
         return view('front-desk.edit', compact('frontDeskItem', 'matters', 'contacts'));
     }
@@ -109,6 +136,10 @@ class FrontDeskItemController extends Controller
             'details' => 'nullable|string',
             'remarks' => 'nullable|string',
         ]);
+
+        $validated['doc_type'] = array_values(array_filter($validated['doc_type'], function($value) {
+            return !empty(trim($value));
+        }));
 
         $frontDeskItem->update($validated);
 
@@ -164,5 +195,44 @@ class FrontDeskItemController extends Controller
 
         return redirect()->route('front-desk.mail.index')
             ->with('success', "{$count} item(s) collected in batch {$batchName}.");
+    }
+
+    public function collect(FrontDeskItem $frontDeskItem)
+    {
+        if ($frontDeskItem->collected_by) {
+            return back()->with('error', 'This item has already been collected.');
+        }
+
+        $frontDeskItem->update([
+            'collected_by' => auth()->id(),
+            'collected_at' => now(),
+        ]);
+
+        ActivityLogger::log('FrontDeskItem', $frontDeskItem->id, 'collected', [
+            'Collected: ' . $frontDeskItem->received_from,
+            'To: ' . $frontDeskItem->address_to,
+        ]);
+
+        return back()->with('success', 'Item marked as collected.');
+    }
+
+    public function undoCollect(FrontDeskItem $frontDeskItem)
+    {
+        if (!$frontDeskItem->collected_by) {
+            return back()->with('error', 'This item has not been collected yet.');
+        }
+
+        $frontDeskItem->update([
+            'collected_by' => null,
+            'collected_at' => null,
+            'batch_name' => null,
+        ]);
+
+        ActivityLogger::log('FrontDeskItem', $frontDeskItem->id, 'undo_collected', [
+            'Undo collection: ' . $frontDeskItem->received_from,
+            'To: ' . $frontDeskItem->address_to,
+        ]);
+
+        return back()->with('success', 'Collection undone. Item is pending again.');
     }
 }

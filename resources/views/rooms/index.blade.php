@@ -89,7 +89,7 @@
                     <svg class="w-3 h-3" fill="none" viewBox="0 0 14 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/></svg>
                 </button>
             </div>
-            <form :action="editMode ? '/rooms/' + roomId : '/rooms'" method="POST" class="p-4 md:p-5">
+            <form :action="editMode ? '/booking/rooms/' + roomId : '/booking/rooms'" method="POST" class="p-4 md:p-5">
                 @csrf
                 <template x-if="editMode">
                     <input type="hidden" name="_method" value="PUT">

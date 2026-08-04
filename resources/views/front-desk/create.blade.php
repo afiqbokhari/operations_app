@@ -1,15 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-4xl mx-auto">
+<div class="max-w-7xl mx-auto">
 
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Log New Mail / Package</h1>
-        <a href="{{ route('front-desk.mail.index') }}"
-            class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600">
-            ← Back
-        </a>
+    <div class="mb-6">
+        <a href="javascript:history.back()" class="text-blue-600 dark:text-blue-500 hover:underline">← Back</a>
     </div>
+
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Log New Mail / Package</h1>
 
     <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
         <form method="POST" action="{{ route('front-desk.mail.store') }}">
@@ -18,19 +16,22 @@
             <div class="grid gap-6 mb-6 md:grid-cols-2">
                 {{-- Date Received --}}
                 <div>
-                    <label for="date_received" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Date Received *</label>
-                    <input type="date" name="date_received" id="date_received" value="{{ old('date_received', date('Y-m-d')) }}" required
+                    <label for="date_received" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Date
+                        Received *</label>
+                    <input type="date" name="date_received" id="date_received"
+                        value="{{ old('date_received', date('Y-m-d')) }}" required
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     @error('date_received')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
 
                 {{-- Received Via --}}
                 <div>
-                    <label for="received_via" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Received Via *</label>
+                    <label for="received_via"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Received Via *</label>
                     <select name="received_via" id="received_via" required
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <option value="">Select...</option>
-                        <option value="Hand Delivery" {{ old('received_via')==='Hand Delivery' ? 'selected' : '' }}>Hand Delivery</option>
+                        <option value="Hand Delivery" {{ old('received_via')==='Hand Delivery' ? 'selected' : '' }}>Hand
+                            Delivery</option>
                         <option value="Courier" {{ old('received_via')==='Courier' ? 'selected' : '' }}>Courier</option>
                         <option value="Post" {{ old('received_via')==='Post' ? 'selected' : '' }}>Post</option>
                     </select>
@@ -39,12 +40,13 @@
 
                 {{-- Received From (autofill + manual) --}}
                 <div>
-                    <label for="received_from" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Received From *</label>
+                    <label for="received_from"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Received From *</label>
                     <div x-data="{ open: false, search: '', selected: '' }" class="relative">
-                        <input type="text" name="received_from" id="received_from" x-model="selected" @input="search = $event.target.value; open = search.length >= 2"
+                        <input type="text" name="received_from" id="received_from" x-model="selected"
+                            @input="search = $event.target.value; open = search.length >= 2"
                             value="{{ old('received_from') }}" required
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            placeholder="Type name or select contact...">
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <div x-show="open" x-cloak @click.away="open = false"
                             class="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto">
                             @foreach($contacts as $contact)
@@ -52,7 +54,7 @@
                                 class="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer border-b dark:border-gray-600 last:border-0">
                                 {{ $contact->name }}
                                 @if($contact->company)
-                                    <span class="text-xs text-gray-400">({{ $contact->company }})</span>
+                                <span class="text-xs text-gray-400">({{ $contact->company }})</span>
                                 @endif
                             </div>
                             @endforeach
@@ -63,16 +65,17 @@
 
                 {{-- Address To --}}
                 <div>
-                    <label for="address_to" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Address To *</label>
+                    <label for="address_to" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Address
+                        To *</label>
                     <input type="text" name="address_to" id="address_to" value="{{ old('address_to') }}" required
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        placeholder="e.g. CEO Office, HR, John Doe">
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     @error('address_to')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
 
                 {{-- Letter Date --}}
                 <div>
-                    <label for="letter_date" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Letter Date</label>
+                    <label for="letter_date" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Letter
+                        Date</label>
                     <input type="date" name="letter_date" id="letter_date" value="{{ old('letter_date') }}"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     @error('letter_date')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
@@ -80,12 +83,14 @@
 
                 {{-- Matter (autofill) --}}
                 <div>
-                    <label for="matter_id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Matter / Case Reference</label>
-                    <div x-data="{ open: false, search: '', selectedId: '{{ old('matter_id') }}', selectedName: '' }" class="relative">
+                    <label for="matter_id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Matter /
+                        Case Reference</label>
+                    <div x-data="{ open: false, search: '', selectedId: '{{ old('matter_id') }}', selectedName: '' }"
+                        class="relative">
                         <input type="hidden" name="matter_id" :value="selectedId">
-                        <input type="text" x-model="selectedName" @input="search = $event.target.value; open = search.length >= 2"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            placeholder="Search matter...">
+                        <input type="text" x-model="selectedName"
+                            @input="search = $event.target.value; open = search.length >= 2"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <div x-show="open" x-cloak @click.away="open = false"
                             class="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto">
                             @foreach($matters as $matter)
@@ -100,54 +105,63 @@
                 </div>
             </div>
 
-            {{-- Document Types (multi-select tags) --}}
-            <div class="mb-6" x-data="{ types: {{ json_encode(old('doc_type', [])) }}, newType: '' }">
+            {{-- Document Types (toggle chips + free-text Other) --}}
+            <div class="mb-6" x-data="{
+                types: {{ json_encode(old('doc_type', ['Letter'])) }},
+                otherType: ''
+            }">
                 <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Document Type(s) *</label>
-                <div class="flex flex-wrap gap-2 mb-2">
-                    <template x-for="(type, index) in types" :key="index">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+
+                <!-- Toggle chips for predefined types -->
+                <div class="flex flex-wrap gap-2 mb-3">
+                    <template x-for="type in ['Letter', 'Invoice', 'Contract', 'Report', 'Package']" :key="type">
+                        <label :class="[
+                            'flex items-center px-3 py-1.5 text-sm font-medium rounded cursor-pointer transition-all duration-200',
+                            types.includes(type) 
+                                ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600' 
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                        ]"
+                            @click="if(types.includes(type)) { types = types.filter(t => t !== type); } else { types.push(type); }">
                             <span x-text="type"></span>
-                            <button type="button" @click="types.splice(index, 1)"
-                                class="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-200 hover:bg-blue-300 dark:bg-blue-800 dark:hover:bg-blue-700">
-                                &times;
-                            </button>
-                            <input type="hidden" name="doc_type[]" :value="type">
-                        </span>
+                        </label>
                     </template>
                 </div>
-                <div class="flex gap-2">
-                    <select x-model="newType" @change="if(newType && !types.includes(newType)) { types.push(newType); newType = ''; }"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <option value="">Add document type...</option>
-                        <option value="Letter">Letter</option>
-                        <option value="Invoice">Invoice</option>
-                        <option value="Contract">Contract</option>
-                        <option value="Report">Report</option>
-                        <option value="Package">Package</option>
-                        <option value="Other">Other</option>
-                    </select>
-                    <input type="text" x-model="newType" @keydown.enter.prevent="if(newType && !types.includes(newType)) { types.push(newType); newType = ''; }"
-                        placeholder="Or type custom..."
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+
+                <!-- Free-text Other input -->
+                <div class="mb-3">
+                    <label for="doc-type-other-input"
+                        class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Other document
+                        type:</label>
+                    <input type="text" id="doc-type-other-input" x-model="otherType"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 </div>
+
                 @error('doc_type')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+
+                <!-- Hidden inputs for form submission -->
+                <template x-for="type in types" :key="type">
+                    <input type="hidden" name="doc_type[]" :value="type">
+                </template>
+                <template x-if="otherType && otherType.trim() !== ''">
+                    <input type="hidden" name="doc_type[]" :value="otherType">
+                </template>
             </div>
 
             {{-- Details --}}
             <div class="mb-6">
-                <label for="details" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Details</label>
+                <label for="details"
+                    class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Details</label>
                 <textarea name="details" id="details" rows="3"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="Optional description...">{{ old('details') }}</textarea>
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">{{ old('details') }}</textarea>
                 @error('details')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
 
             {{-- Remarks --}}
             <div class="mb-6">
-                <label for="remarks" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Remarks</label>
+                <label for="remarks"
+                    class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Remarks</label>
                 <textarea name="remarks" id="remarks" rows="2"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="Any notes...">{{ old('remarks') }}</textarea>
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">{{ old('remarks') }}</textarea>
                 @error('remarks')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
 

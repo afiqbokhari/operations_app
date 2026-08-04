@@ -28,7 +28,28 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = $request->user();
+
+        // Determine the user's first accessible module (in priority order) so
+        // they are redirected to the correct home page after login.
+        $module = null;
+        foreach (['bookings', 'front_desk'] as $id) {
+            if ($user->can($id . '.view')) {
+                $module = $id;
+                break;
+            }
+        }
+
+        if ($module) {
+            $request->session()->put('module', $module);
+        }
+
+        $home = match ($module) {
+            'front_desk' => route('front-desk.dashboard'),
+            default => route('dashboard', absolute: false),
+        };
+
+        return redirect()->intended($home);
     }
 
     /**

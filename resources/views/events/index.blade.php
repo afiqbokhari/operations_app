@@ -75,7 +75,7 @@
                                 <button class="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 border border-red-200 rounded-e-lg hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:border-red-700 dark:hover:bg-red-800">Cancel</button>
                             </form>
                         </div>
-                        @if($event->status === 'pending' && auth()->user()->role === 'admin')
+                        @if($event->status === 'pending' && auth()->user()->hasRole('admin'))
                         <div class="inline-flex rounded-md shadow-sm ml-2" role="group">
                             <form action="{{ route('events.approve', $event) }}" method="POST" class="inline">
                                 @csrf

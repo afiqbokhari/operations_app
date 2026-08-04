@@ -74,7 +74,7 @@
                     <svg class="w-3 h-3" fill="none" viewBox="0 0 14 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/></svg>
                 </button>
             </div>
-            <form :action="editMode ? '/menus/' + menuId : '/menus'" method="POST" class="p-4 md:p-5">
+            <form :action="editMode ? '/admin/menus/' + menuId : '/admin/menus'" method="POST" class="p-4 md:p-5">
                 @csrf
                 <template x-if="editMode"><input type="hidden" name="_method" value="PUT"></template>
                 <div class="grid gap-4 mb-4">

@@ -23,10 +23,27 @@
 <body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
 
     {{-- Search Results Modal --}}
-    <div x-data="{ searchOpen: false, searchQuery: '', searchBookings: [], searchEvents: [] }"
+    <div x-data="{
+            searchOpen: false,
+            searchQuery: '',
+            type: '',
+            date_from: '',
+            date_to: '',
+            status: '',
+            searchBookings: [],
+            searchEvents: [],
+            doSearch() {
+                fetch('/api/search?q=' + this.searchQuery + '&type=' + this.type + '&date_from=' + this.date_from + '&date_to=' + this.date_to + '&status=' + this.status)
+                    .then(r => r.json())
+                    .then(data => {
+                        this.searchBookings = data.filter(x => x.type === 'Hearing');
+                        this.searchEvents = data.filter(x => x.type === 'Event');
+                    });
+            }
+        }"
         @keydown.escape.window="searchOpen = false" x-show="searchOpen" x-cloak
         class="fixed inset-0 z-[9999] flex items-start justify-center pt-20"
-        x-on:open-search.window="searchOpen = true; searchQuery = $event.detail.query; fetch('/api/search?q=' + $event.detail.query + '&type=' + ($event.detail.type || '') + '&date_from=' + ($event.detail.date_from || '') + '&date_to=' + ($event.detail.date_to || '') + '&status=' + ($event.detail.status || '')).then(r => r.json()).then(data => { searchBookings = data.filter(x => x.type === 'Hearing'); searchEvents = data.filter(x => x.type === 'Event'); })">
+        x-on:open-search.window="searchOpen = true; searchQuery = $event.detail.query; type = $event.detail.type || ''; date_from = $event.detail.date_from || ''; date_to = $event.detail.date_to || ''; status = $event.detail.status || ''; doSearch()">
         <div class="fixed inset-0 bg-black bg-opacity-50" @click="searchOpen = false"></div>
         <div
             class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] overflow-y-auto z-10 mx-4">
@@ -36,6 +53,39 @@
                         x-text="searchQuery"></span>"</h3>
                 <button @click="searchOpen = false"
                     class="text-gray-400 hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">✕</button>
+            </div>
+            {{-- Advanced Filters (moved out of the navbar into the modal) --}}
+            <div class="px-4 py-3 border-b dark:border-gray-600 bg-gray-50 dark:bg-gray-900 grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Type</label>
+                    <select x-model="type" @change="doSearch()"
+                        class="w-full text-xs border border-gray-300 rounded-lg p-1.5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="">All</option>
+                        <option value="hearing">Hearings</option>
+                        <option value="event">Events</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Status</label>
+                    <select x-model="status" @change="doSearch()"
+                        class="w-full text-xs border border-gray-300 rounded-lg p-1.5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="">All</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="tentative">Tentative</option>
+                        <option value="approved">Approved</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Date From</label>
+                    <input type="date" x-model="date_from" @change="if(date_to < date_from) date_to = date_from; doSearch()"
+                        class="w-full text-xs border border-gray-300 rounded-lg p-1.5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Date To</label>
+                    <input type="date" x-model="date_to" :min="date_from" @change="doSearch()"
+                        class="w-full text-xs border border-gray-300 rounded-lg p-1.5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
             </div>
             <div class="p-4">
                 <template x-if="searchBookings.length > 0">
@@ -103,22 +153,26 @@
     </div>
 
     <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        @php
+        $currentModule = session('module', 'bookings');
+        $navMenus = \App\Models\Menu::where('is_active', true)
+            ->where('module', $currentModule)
+            ->whereNull('parent_id')->orderBy('order')->get();
+        $moduleHome = [
+            'bookings' => route('dashboard'),
+            'front_desk' => route('front-desk.dashboard'),
+        ];
+        @endphp
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="/dashboard" class="text-xl font-bold text-gray-800 dark:text-white">AIAC Operations</a>
+                    <a href="{{ $moduleHome[$currentModule] ?? route('dashboard') }}"
+                        class="text-xl font-bold text-gray-800 dark:text-white">AIAC Operations</a>
                 </div>
 
                 <div class="hidden md:flex items-center space-x-1">
-                    @php
-                    $currentModule = session('module', 'bookings');
-                    $navMenus = \App\Models\Menu::where('is_active', true)
-                        ->where('module', $currentModule)
-                        ->whereNull('parent_id')->orderBy('order')->get();
-                    @endphp
                     @foreach($navMenus as $menu)
-                    @if(!$menu->permission || \App\Models\Permission::can(auth()->user()->role, $menu->permission,
-                    'view'))
+                    @if(!$menu->permission || auth()->user()->can($menu->permission . '.view'))
                     @if($menu->children->isNotEmpty())
                     <div class="relative group">
                         <button
@@ -132,8 +186,7 @@
                         <div
                             class="absolute left-0 top-full mt-1 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 min-w-[180px]">
                             @foreach($menu->children as $child)
-                            @if(!$child->permission || \App\Models\Permission::can(auth()->user()->role,
-                            $child->permission, 'view'))
+                            @if(!$child->permission || auth()->user()->can($child->permission . '.view'))
                             <a href="{{ $child->route_name ? route($child->route_name) : '#' }}"
                                 class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded first:rounded-t-lg last:rounded-b-lg">
                                 {{ $child->label }}
@@ -152,14 +205,13 @@
                     @endforeach
                 </div>
 
-                <div class="hidden md:flex items-center space-x-4">
-                    <div class="flex items-center gap-1 relative"
-                        x-data="{ query: '', results: [], open: false, showAdvanced: false, type: '', date_from: '', date_to: '', room: '', status: '' }">
+                <div class="hidden md:flex items-center space-x-3">
+                    <div class="relative" x-data="{ query: '', results: [], open: false }">
                         {{-- Search Input --}}
                         <div class="relative">
                             <input type="text" x-model="query"
-                                @input.debounce.300ms="if(!showAdvanced) { if(query.length >= 2) { fetch('/api/search?q=' + query + '&type=' + type + '&date_from=' + date_from + '&date_to=' + date_to + '&room=' + room + '&status=' + status).then(r => r.json()).then(data => { results = data; open = data.length > 0; }) } else { results = []; open = false; } }"
-                                @keydown.enter="$dispatch('open-search', { query: query, type: type, date_from: date_from, date_to: date_to, status: status })"
+                                @input.debounce.300ms="if(query.length >= 2) { fetch('/api/search?q=' + query).then(r => r.json()).then(data => { results = data; open = data.length > 0; }) } else { results = []; open = false; }"
+                                @keydown.enter="$dispatch('open-search', { query: query })"
                                 @click.away="open = false" placeholder="Search..."
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1.5 w-40 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             {{-- Dropdown --}}
@@ -178,62 +230,13 @@
                                 </template>
                             </div>
                         </div>
-                        {{-- Filter Toggle --}}
-                        <button @click="showAdvanced = !showAdvanced"
-                            class="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                            </svg>
-                        </button>
-                        {{-- Advanced Panel --}}
-                        <div x-show="showAdvanced" x-cloak style="position: absolute; top: 40px; left: 0;"
-                            class="w-80 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg z-[999] p-4">
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Type</label>
-                                    <select x-model="type"
-                                        class="w-full text-xs border rounded p-1.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
-                                        <option value="">All</option>
-                                        <option value="hearing">Hearings</option>
-                                        <option value="event">Events</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Status</label>
-                                    <select x-model="status"
-                                        class="w-full text-xs border rounded p-1.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
-                                        <option value="">All</option>
-                                        <option value="confirmed">Confirmed</option>
-                                        <option value="tentative">Tentative</option>
-                                        <option value="approved">Approved</option>
-                                        <option value="pending">Pending</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Date From</label>
-                                    <input type="date" x-model="date_from"
-                                        @change="if(date_to < date_from) date_to = date_from"
-                                        class="w-full text-xs border rounded p-1.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Date To</label>
-                                    <input type="date" x-model="date_to" :min="date_from"
-                                        class="w-full text-xs border rounded p-1.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
-                                </div>
-                            </div>
-                            <a @click.prevent="$dispatch('open-search', { query: query, type: type, date_from: date_from, date_to: date_to, status: status })"
-                                class="block mt-3 text-center text-xs bg-blue-600 text-white py-1.5 rounded hover:bg-blue-700 cursor-pointer">
-                                Search
-                            </a>
-                        </div>
                     </div>
                     @php
                         $availableModules = [];
-                        if (\App\Models\Permission::can(auth()->user()->role, 'bookings', 'view')) {
+                        if (auth()->user()->can('bookings.view')) {
                             $availableModules[] = ['id' => 'bookings', 'label' => '📋 Bookings'];
                         }
-                        if (\App\Models\Permission::can(auth()->user()->role, 'front_desk', 'view')) {
+                        if (auth()->user()->can('front_desk.view')) {
                             $availableModules[] = ['id' => 'front_desk', 'label' => '🛎️ Front Desk'];
                         }
                         $currentModuleLabel = '';
@@ -251,9 +254,9 @@
                     @if(count($availableModules) > 1)
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open" @click.away="open = false"
-                            class="px-3 py-1.5 text-xs font-medium rounded border bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
                             {{ $currentModuleLabel }}
-                            <svg class="w-3 h-3 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <div x-show="open" class="absolute top-full right-0 mt-1 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg z-50 w-36">
                             @foreach($availableModules as $mod)
@@ -268,19 +271,48 @@
                         </div>
                     </div>
                     @endif
-                    <button @click="dark = !dark"
-                        class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">🌓</button>
-                    <span class="text-sm text-gray-600 dark:text-gray-300">{{ Auth::user()->name }}</span>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button
-                            class="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium">Logout</button>
-                    </form>
+                    {{-- User Menu: Administration / Dark mode / Logout consolidated --}}
+                    <div class="relative" x-data="{ userOpen: false }" @click.away="userOpen = false">
+                        <button @click="userOpen = !userOpen"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
+                            <span
+                                class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-semibold">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
+                            <span class="hidden lg:inline">{{ Auth::user()->name }}</span>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div x-show="userOpen" x-cloak
+                            class="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg z-50 py-1">
+                            @if(auth()->user()->can('users.view') || auth()->user()->can('permissions.view') || auth()->user()->can('logs.view') || auth()->user()->can('menus.view'))
+                            <a href="{{ route('admin.dashboard') }}"
+                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+                                ⚙️ Administration
+                            </a>
+                            @endif
+                            <button @click="dark = !dark; userOpen = false"
+                                class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+                                🌓 Dark mode
+                            </button>
+                            <hr class="my-1 dark:border-gray-600">
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button
+                                    class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600">Logout</button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="md:hidden flex items-center space-x-3">
-                    <button @click="dark = !dark" class="p-2 text-gray-600 dark:text-gray-300">🌓</button>
-                    <button @click="open = !open"
+                <div class="md:hidden flex items-center space-x-2">
+                    <button @click="$dispatch('open-search', { query: '' })" title="Search"
+                        class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                    <button @click="dark = !dark" title="Toggle dark mode"
+                        class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">🌓</button>
+                    <button @click="open = !open" title="Menu"
                         class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -295,15 +327,14 @@
         <div x-show="open" x-cloak class="md:hidden border-t border-gray-200 dark:border-gray-700">
             <div class="px-4 py-3 space-y-1">
                 @foreach($navMenus as $menu)
-                @if(!$menu->permission || \App\Models\Permission::can(auth()->user()->role, $menu->permission, 'view'))
+                @if(!$menu->permission || auth()->user()->can($menu->permission . '.view'))
                 <a href="{{ $menu->route_name ? route($menu->route_name) : '#' }}" @click="open = false"
                     class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     {{ $menu->label }}
                 </a>
                 @if($menu->children->isNotEmpty())
                 @foreach($menu->children as $child)
-                @if(!$child->permission || \App\Models\Permission::can(auth()->user()->role, $child->permission,
-                'view'))
+                @if(!$child->permission || auth()->user()->can($child->permission . '.view'))
                 <a href="{{ $child->route_name ? route($child->route_name) : '#' }}" @click="open = false"
                     class="block px-6 py-1.5 rounded text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 ml-4">
                     ↳ {{ $child->label }}
@@ -314,6 +345,16 @@
                 @endif
                 @endforeach
                 <hr class="my-2 dark:border-gray-700">
+                @if(auth()->user()->can('users.view') || auth()->user()->can('permissions.view') || auth()->user()->can('logs.view') || auth()->user()->can('menus.view'))
+                <a href="{{ route('admin.dashboard') }}" @click="open = false"
+                    class="block px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    ⚙️ Administration
+                </a>
+                @endif
+                <button @click="dark = !dark; open = false"
+                    class="block w-full text-left px-3 py-2 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    🌓 Dark mode
+                </button>
                 <div class="px-3 py-2">
                     <span class="text-sm text-gray-600 dark:text-gray-300">{{ Auth::user()->name }}</span>
                 </div>

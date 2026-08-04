@@ -144,10 +144,21 @@
                     </td>
                     <td class="px-4 py-3">
                         <div class="inline-flex rounded-md shadow-sm" role="group">
-                            <a href="{{ route('front-desk.mail.edit', $item) }}?view=1"
+                            <a href="{{ route('front-desk.mail.show', $item) }}"
                                 class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-s-lg hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-blue-800 no-underline">View</a>
                             <a href="{{ route('front-desk.mail.edit', $item) }}"
                                 class="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 border-t border-b border-green-200 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:border-green-700 dark:hover:bg-green-800 no-underline">Edit</a>
+                            @if(!$item->collected_by)
+                            <form action="{{ route('front-desk.mail.collect', $item) }}" method="POST"
+                                onsubmit="return confirm('Mark this item as collected?');" class="inline">@csrf
+                                <button class="px-3 py-1.5 text-xs font-medium text-teal-700 bg-teal-100 border-t border-b border-teal-200 hover:bg-teal-200 dark:bg-teal-900 dark:text-teal-300 dark:border-teal-700 dark:hover:bg-teal-800">Collect</button>
+                            </form>
+                            @else
+                            <form action="{{ route('front-desk.mail.undo-collect', $item) }}" method="POST"
+                                onsubmit="return confirm('Undo collection and return this item to pending?');" class="inline">@csrf
+                                <button class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 border-t border-b border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">Undo</button>
+                            </form>
+                            @endif
                             <form action="{{ route('front-desk.mail.destroy', $item) }}" method="POST"
                                 onsubmit="return confirm('Delete this item?');" class="inline">@csrf @method('DELETE')
                                 <button class="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 border border-red-200 rounded-e-lg hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:border-red-700 dark:hover:bg-red-800">Delete</button>

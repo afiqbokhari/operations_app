@@ -12,9 +12,9 @@ class DatabaseSeeder extends Seeder
             FeatureSeeder::class,
             RoomSeeder::class,
             RoomFeatureSeeder::class,
-            UserSeeder::class,
             MenuStructureSeeder::class,
             RoleAndPermissionSeeder::class,
+            UserSeeder::class,
         ]);
     }
 }
