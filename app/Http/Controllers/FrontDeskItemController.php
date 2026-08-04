@@ -68,8 +68,8 @@ class FrontDeskItemController extends Controller
 
     public function create()
     {
-        $matters = FrontDeskMatter::orderBy('name')->get();
-        $contacts = FrontDeskContact::orderBy('name')->get();
+        $matters = FrontDeskMatter::select('id', 'name')->orderBy('name')->get();
+        $contacts = FrontDeskContact::select('id', 'name', 'company')->orderBy('name')->get();
 
         return view('front-desk.create', compact('matters', 'contacts'));
     }
@@ -115,8 +115,8 @@ class FrontDeskItemController extends Controller
 
     public function edit(FrontDeskItem $frontDeskItem)
     {
-        $matters = FrontDeskMatter::orderBy('name')->get();
-        $contacts = FrontDeskContact::orderBy('name')->get();
+        $matters = FrontDeskMatter::select('id', 'name')->orderBy('name')->get();
+        $contacts = FrontDeskContact::select('id', 'name', 'company')->orderBy('name')->get();
         $frontDeskItem->load(['matter', 'collectedBy', 'loggedBy']);
 
         return view('front-desk.edit', compact('frontDeskItem', 'matters', 'contacts'));

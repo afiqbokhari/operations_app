@@ -39,14 +39,71 @@
                     @error('received_via')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
 
-                {{-- Received From --}}
+                {{-- Received From (autofill) --}}
                 <div>
                     <label for="received_from" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Received From *</label>
                     @if($viewing)
                         <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->received_from }}</p>
                     @else
-                        <input type="text" name="received_from" id="received_from" value="{{ old('received_from', $frontDeskItem->received_from) }}" required
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <div x-data="{ 
+                            open: false, 
+                            search: '', 
+                            selected: '{{ addslashes(old('received_from', $frontDeskItem->received_from)) }}',
+                            contacts: {{ Js::from($contacts->map(fn($c) => ['name' => $c->name, 'company' => $c->company])) }},
+                            filteredContacts: []
+                        }" class="relative">
+                            <input type="text" 
+                                name="received_from" 
+                                id="received_from" 
+                                x-model="selected"
+                                @input.debounce.200ms="
+                                    search = selected.toLowerCase();
+                                    if (search.length >= 2) {
+                                        filteredContacts = contacts.filter(c => 
+                                            c.name.toLowerCase().includes(search) || 
+                                            (c.company && c.company.toLowerCase().includes(search))
+                                        );
+                                        open = true;
+                                    } else {
+                                        open = false;
+                                    }
+                                "
+                                @focus="
+                                    if (selected.length >= 2) {
+                                        filteredContacts = contacts.filter(c => 
+                                            c.name.toLowerCase().includes(selected.toLowerCase()) || 
+                                            (c.company && c.company.toLowerCase().includes(selected.toLowerCase()))
+                                        );
+                                        open = true;
+                                    }
+                                "
+                                @keydown.escape="open = false"
+                                required
+                                placeholder="Type at least 2 characters to search..."
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+                            
+                            <div x-show="open" 
+                                x-cloak 
+                                @click.away="open = false"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 transform scale-y-95"
+                                x-transition:enter-end="opacity-100 transform scale-y-100"
+                                class="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                                
+                                <template x-for="contact in filteredContacts" :key="contact.name">
+                                    <div @click="selected = contact.name; open = false"
+                                        class="px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600 cursor-pointer border-b dark:border-gray-600 last:border-0 transition-colors duration-150">
+                                        <span x-text="contact.name"></span>
+                                        <span x-show="contact.company" class="text-xs text-gray-400 ml-1" x-text="'(' + contact.company + ')'"></span>
+                                    </div>
+                                </template>
+                                
+                                <div x-show="filteredContacts.length === 0" 
+                                    class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                    No contacts found matching "<span x-text="search"></span>"
+                                </div>
+                            </div>
+                        </div>
                     @endif
                     @error('received_from')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
@@ -76,20 +133,59 @@
                     @if($viewing)
                         <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->matter?->name ?? '-' }}</p>
                     @else
-                        <div x-data="{ open: false, search: '', selectedId: '{{ old('matter_id', $frontDeskItem->matter_id) }}', selectedName: '{{ $frontDeskItem->matter?->name ?? '' }}' }"
-                            class="relative">
+                        <div x-data="{ 
+                            open: false, 
+                            search: '', 
+                            selectedId: '{{ addslashes(old('matter_id', $frontDeskItem->matter_id)) }}', 
+                            selectedName: '{{ addslashes(old('matter_name', $frontDeskItem->matter?->name ?? '')) }}',
+                            matters: {{ Js::from($matters->map(fn($m) => ['id' => $m->id, 'name' => $m->name])) }},
+                            filteredMatters: []
+                        }" class="relative">
                             <input type="hidden" name="matter_id" :value="selectedId">
-                            <input type="text" x-model="selectedName"
-                                @input="search = $event.target.value; open = search.length >= 2"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <div x-show="open" x-cloak @click.away="open = false"
-                                class="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto">
-                                @foreach($matters as $matter)
-                                <div @click="selectedId = '{{ $matter->id }}'; selectedName = '{{ $matter->name }}'; open = false"
-                                    class="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer border-b dark:border-gray-600 last:border-0">
-                                    {{ $matter->name }}
+                            <input type="text" 
+                                x-model="selectedName"
+                                @input.debounce.200ms="
+                                    search = selectedName.toLowerCase();
+                                    if (search.length >= 2) {
+                                        filteredMatters = matters.filter(m => 
+                                            m.name.toLowerCase().includes(search)
+                                        );
+                                        open = true;
+                                    } else {
+                                        open = false;
+                                    }
+                                "
+                                @focus="
+                                    if (selectedName.length >= 2) {
+                                        filteredMatters = matters.filter(m => 
+                                            m.name.toLowerCase().includes(selectedName.toLowerCase())
+                                        );
+                                        open = true;
+                                    }
+                                "
+                                @keydown.escape="open = false"
+                                placeholder="Type at least 2 characters to search..."
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+                            
+                            <div x-show="open" 
+                                x-cloak 
+                                @click.away="open = false"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 transform scale-y-95"
+                                x-transition:enter-end="opacity-100 transform scale-y-100"
+                                class="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                                
+                                <template x-for="matter in filteredMatters" :key="matter.id">
+                                    <div @click="selectedId = matter.id; selectedName = matter.name; open = false"
+                                        class="px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600 cursor-pointer border-b dark:border-gray-600 last:border-0 transition-colors duration-150"
+                                        x-text="matter.name">
+                                    </div>
+                                </template>
+                                
+                                <div x-show="filteredMatters.length === 0" 
+                                    class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                    No matters found matching "<span x-text="search"></span>"
                                 </div>
-                                @endforeach
                             </div>
                         </div>
                     @endif
