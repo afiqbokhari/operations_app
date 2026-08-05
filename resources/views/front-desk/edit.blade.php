@@ -263,7 +263,7 @@
                     otherType: ''
                 }">
                     <div class="flex flex-wrap gap-2 mb-3">
-                        <template x-for="type in ['Letter', 'Invoice', 'Contract', 'Report', 'Package']" :key="type">
+                        <template x-for="type in ['Letter', 'Cash', 'Cheque', 'Forms', 'Final Awards', 'Decisions', 'Package', 'Others']" :key="type">
                             <label :class="[
                                 'flex items-center px-3 py-1.5 text-sm font-medium rounded cursor-pointer transition-all duration-200',
                                 types.includes(type)

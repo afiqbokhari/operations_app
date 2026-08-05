@@ -86,27 +86,28 @@
         <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                    <th class="px-4 py-3 w-10">
+                    <th class="px-3 py-3 w-10">
                         <input type="checkbox" x-model="allSelected"
                             @change="if(allSelected) { selectedItems = {{ $items->pluck('id') }}; selectedCount = selectedItems.length; } else { selectedItems = []; selectedCount = 0; }"
                             class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
                     </th>
-                    <th class="px-4 py-3 hidden lg:table-cell">Date</th>
-                    <th class="px-4 py-3">From</th>
-                    <th class="px-4 py-3">To</th>
-                    <th class="px-4 py-3 hidden lg:table-cell">Passed To</th>
-                    <th class="px-4 py-3 hidden lg:table-cell">Case Ref</th>
-                    <th class="px-4 py-3 hidden md:table-cell">Doc Type</th>
-                    <th class="px-4 py-3 hidden md:table-cell">Via</th>
-                    <th class="px-4 py-3 hidden lg:table-cell">Matter</th>
-                    <th class="px-4 py-3">Status</th>
-                    <th class="px-4 py-3">Actions</th>
+                    <th class="px-3 py-3 hidden lg:table-cell">Date</th>
+                    <th class="px-3 py-3 hidden lg:table-cell">Batch</th>
+                    <th class="px-3 py-3">From</th>
+                    <th class="px-3 py-3">To</th>
+                    <th class="px-3 py-3 hidden lg:table-cell">Passed To</th>
+                    <th class="px-3 py-3 hidden lg:table-cell">Case Ref</th>
+                    <th class="px-3 py-3 hidden md:table-cell">Doc Type</th>
+                    <th class="px-3 py-3 hidden md:table-cell">Via</th>
+                    <th class="px-3 py-3 hidden lg:table-cell">Matter</th>
+                    <th class="px-3 py-3">Status</th>
+                    <th class="px-3 py-3 w-32">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($items as $item)
                 <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                    <td class="px-4 py-3">
+                    <td class="px-3 py-3">
                         @if(!$item->collected_by)
                         <input type="checkbox" value="{{ $item->id }}"
                             x-model="selectedItems"
@@ -114,19 +115,26 @@
                             class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
                         @endif
                     </td>
-                    <td class="px-4 py-3 hidden lg:table-cell text-xs">{{ $item->date_received->format('d/m/y') }}</td>
-                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $item->contact?->name ?? $item->received_from ?? '-' }}</td>
-                    <td class="px-4 py-3">{{ $item->address_to }}</td>
-                    <td class="px-4 py-3 hidden lg:table-cell">{{ $item->passedTo?->name ?? '-' }}</td>
-                    <td class="px-4 py-3 hidden lg:table-cell">{{ $item->case_reference ?? '-' }}</td>
-                    <td class="px-4 py-3 hidden md:table-cell">
+                    <td class="px-3 py-3 hidden lg:table-cell text-xs whitespace-nowrap">{{ $item->date_received->format('d/m/y') }}</td>
+                    <td class="px-3 py-3 hidden lg:table-cell text-center">
+                        @if($item->batch_number)
+                            <span class="px-2 py-0.5 text-xs font-bold rounded bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300">B{{ $item->batch_number }}</span>
+                        @else
+                            <span class="text-gray-400">-</span>
+                        @endif
+                    </td>
+                    <td class="px-3 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ $item->contact?->name ?? $item->received_from ?? '-' }}</td>
+                    <td class="px-3 py-3 whitespace-nowrap">{{ $item->address_to }}</td>
+                    <td class="px-3 py-3 hidden lg:table-cell whitespace-nowrap">{{ $item->passedTo?->name ?? '-' }}</td>
+                    <td class="px-3 py-3 hidden lg:table-cell">{{ $item->case_reference ?? '-' }}</td>
+                    <td class="px-3 py-3 hidden md:table-cell">
                         <div class="flex flex-wrap gap-1">
                             @foreach($item->doc_type as $doc)
                                 <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">{{ $doc }}</span>
                             @endforeach
                         </div>
                     </td>
-                    <td class="px-4 py-3 hidden md:table-cell">
+                    <td class="px-3 py-3 hidden md:table-cell">
                         <span class="px-2 py-0.5 rounded text-xs font-medium
                             {{ $item->received_via === 'Hand Delivery' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : '' }}
                             {{ $item->received_via === 'Courier' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' : '' }}
@@ -134,45 +142,60 @@
                             {{ $item->received_via }}
                         </span>
                     </td>
-                    <td class="px-4 py-3 hidden lg:table-cell text-xs">{{ $item->matter?->name ?? '-' }}</td>
-                    <td class="px-4 py-3">
+                    <td class="px-3 py-3 hidden lg:table-cell text-xs">{{ $item->matter?->name ?? '-' }}</td>
+                    <td class="px-3 py-3">
                         @if($item->collected_by)
-                            <span class="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                                Collected
+                            <span class="inline-flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                <span class="text-xs text-green-700 dark:text-green-400">Collected</span>
                             </span>
                         @else
-                            <span class="px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
-                                Pending
+                            <span class="inline-flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                <span class="text-xs text-yellow-700 dark:text-yellow-400">Pending</span>
                             </span>
                         @endif
                     </td>
-                    <td class="px-4 py-3">
-                        <div class="inline-flex rounded-md shadow-sm" role="group">
-                            <a href="{{ route('front-desk.mail.show', $item) }}"
-                                class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-s-lg hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-blue-800 no-underline">View</a>
-                            <a href="{{ route('front-desk.mail.edit', $item) }}"
-                                class="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 border-t border-b border-green-200 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:border-green-700 dark:hover:bg-green-800 no-underline">Edit</a>
+                    <td class="px-3 py-3">
+                        <div class="flex items-center gap-1">
+                            <a href="{{ route('front-desk.mail.show', $item) }}" title="View"
+                                class="p-1.5 text-blue-600 hover:bg-blue-100 rounded dark:text-blue-400 dark:hover:bg-blue-900">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            </a>
+                            <a href="{{ route('front-desk.mail.edit', $item) }}" title="Edit"
+                                class="p-1.5 text-green-600 hover:bg-green-100 rounded dark:text-green-400 dark:hover:bg-green-900">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </a>
                             @if(!$item->collected_by)
                             <form action="{{ route('front-desk.mail.collect', $item) }}" method="POST"
-                                onsubmit="return confirm('Mark this item as collected?');" class="inline">@csrf
-                                <button class="px-3 py-1.5 text-xs font-medium text-teal-700 bg-teal-100 border-t border-b border-teal-200 hover:bg-teal-200 dark:bg-teal-900 dark:text-teal-300 dark:border-teal-700 dark:hover:bg-teal-800">Collect</button>
+                                onsubmit="return confirm('Mark this item as collected?');" class="inline">
+                                @csrf
+                                <button title="Collect" class="p-1.5 text-teal-600 hover:bg-teal-100 rounded dark:text-teal-400 dark:hover:bg-teal-900">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                </button>
                             </form>
                             @else
                             <form action="{{ route('front-desk.mail.undo-collect', $item) }}" method="POST"
-                                onsubmit="return confirm('Undo collection and return this item to pending?');" class="inline">@csrf
-                                <button class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 border-t border-b border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">Undo</button>
+                                onsubmit="return confirm('Undo collection?');" class="inline">
+                                @csrf
+                                <button title="Undo" class="p-1.5 text-gray-500 hover:bg-gray-100 rounded dark:text-gray-400 dark:hover:bg-gray-700">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                                </button>
                             </form>
                             @endif
                             <form action="{{ route('front-desk.mail.destroy', $item) }}" method="POST"
-                                onsubmit="return confirm('Delete this item?');" class="inline">@csrf @method('DELETE')
-                                <button class="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 border border-red-200 rounded-e-lg hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:border-red-700 dark:hover:bg-red-800">Delete</button>
+                                onsubmit="return confirm('Delete this item?');" class="inline">
+                                @csrf @method('DELETE')
+                                <button title="Delete" class="p-1.5 text-red-600 hover:bg-red-100 rounded dark:text-red-400 dark:hover:bg-red-900">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
                             </form>
                         </div>
                     </td>
                 </tr>
                 @empty
                 <tr class="bg-white dark:bg-gray-800">
-                    <td colspan="11" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">No mail/package items found.</td>
+                    <td colspan="12" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">No mail/package items found.</td>
                 </tr>
                 @endforelse
             </tbody>
