@@ -244,7 +244,7 @@
                 </div>
 
                 <!-- Free-text Other input -->
-                <div class="mb-3">
+                <div class="mb-3" x-show="types.includes('Others')">
                     <label for="doc-type-other-input"
                         class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Other document
                         type:</label>
