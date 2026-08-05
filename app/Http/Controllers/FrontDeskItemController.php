@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\FrontDeskItem;
 use App\Models\FrontDeskMatter;
 use App\Models\FrontDeskContact;
+use App\Models\User;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 
@@ -19,7 +20,7 @@ class FrontDeskItemController extends Controller
         $items = FrontDeskItem::with(['contact', 'matter', 'collectedBy', 'loggedBy'])
             ->when($request->search, function ($query, $search) {
                 $query->where('address_to', 'like', "%{$search}%")
-                    ->orWhere('batch_name', 'like', "%{$search}%")
+                    ->orWhere('batch_number', 'like', "%{$search}%")
                     ->orWhereHas('contact', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     })
@@ -72,17 +73,21 @@ class FrontDeskItemController extends Controller
     {
         $matters = FrontDeskMatter::select('id', 'name')->orderBy('name')->get();
         $contacts = FrontDeskContact::select('id', 'name', 'company')->orderBy('name')->get();
+        $legalUsers = User::role('legal')->orderBy('name')->get();
 
-        return view('front-desk.create', compact('matters', 'contacts'));
+        return view('front-desk.create', compact('matters', 'contacts', 'legalUsers'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'date_received' => 'required|date',
+            'batch_number' => 'nullable|integer|min:1|max:5',
             'contact_name' => 'required|string|max:255',
             'address_to' => 'required|string|max:255',
+            'passed_to' => 'nullable|exists:users,id',
             'letter_date' => 'nullable|date',
+            'case_reference' => 'nullable|string|max:20',
             'matter_name' => 'nullable|string|max:255',
             'received_via' => 'required|in:Hand Delivery,Courier,Post',
             'doc_type' => 'required|array',
@@ -135,18 +140,22 @@ class FrontDeskItemController extends Controller
     {
         $matters = FrontDeskMatter::select('id', 'name')->orderBy('name')->get();
         $contacts = FrontDeskContact::select('id', 'name', 'company')->orderBy('name')->get();
-        $frontDeskItem->load(['contact', 'matter', 'collectedBy', 'loggedBy']);
+        $legalUsers = User::role('legal')->orderBy('name')->get();
+        $frontDeskItem->load(['contact', 'matter', 'collectedBy', 'loggedBy', 'passedTo']);
 
-        return view('front-desk.edit', compact('frontDeskItem', 'matters', 'contacts'));
+        return view('front-desk.edit', compact('frontDeskItem', 'matters', 'contacts', 'legalUsers'));
     }
 
     public function update(Request $request, FrontDeskItem $frontDeskItem)
     {
         $validated = $request->validate([
             'date_received' => 'required|date',
+            'batch_number' => 'nullable|integer|min:1|max:5',
             'contact_name' => 'required|string|max:255',
             'address_to' => 'required|string|max:255',
+            'passed_to' => 'nullable|exists:users,id',
             'letter_date' => 'nullable|date',
+            'case_reference' => 'nullable|string|max:20',
             'matter_name' => 'nullable|string|max:255',
             'received_via' => 'required|in:Hand Delivery,Courier,Post',
             'doc_type' => 'required|array',
@@ -206,7 +215,7 @@ class FrontDeskItemController extends Controller
             'items.*' => 'exists:front_desk_items,id',
         ]);
 
-        $batchName = 'BATCH-' . now()->format('Ymd-His');
+        $batchNumber = FrontDeskItem::getCurrentBatchNumber();
         $count = 0;
 
         $items = FrontDeskItem::whereIn('id', $validated['items'])
@@ -215,7 +224,7 @@ class FrontDeskItemController extends Controller
 
         foreach ($items as $item) {
             $item->update([
-                'batch_name' => $batchName,
+                'batch_number' => $batchNumber,
                 'collected_by' => auth()->id(),
                 'collected_at' => now(),
             ]);
@@ -225,12 +234,12 @@ class FrontDeskItemController extends Controller
         if ($count > 0) {
             ActivityLogger::log('FrontDeskItem', 0, 'batch_collected', [
                 "Batch pickup: {$count} items",
-                "Batch: {$batchName}",
+                "Batch: {$batchNumber}",
             ]);
         }
 
         return redirect()->route('front-desk.mail.index')
-            ->with('success', "{$count} item(s) collected in batch {$batchName}.");
+            ->with('success', "{$count} item(s) collected in Batch {$batchNumber}.");
     }
 
     public function collect(FrontDeskItem $frontDeskItem)
@@ -261,7 +270,7 @@ class FrontDeskItemController extends Controller
         $frontDeskItem->update([
             'collected_by' => null,
             'collected_at' => null,
-            'batch_name' => null,
+            'batch_number' => null,
         ]);
 
         ActivityLogger::log('FrontDeskItem', $frontDeskItem->id, 'undo_collected', [

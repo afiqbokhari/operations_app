@@ -61,9 +61,9 @@
             <span class="px-3 py-1 text-sm font-medium rounded {{ $frontDeskItem->collected_by ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' }}">
                 {{ $frontDeskItem->collected_by ? 'Collected' : 'Pending Pickup' }}
             </span>
-            @if($frontDeskItem->batch_name)
+            @if($frontDeskItem->batch_number)
                 <span class="px-3 py-1 text-sm font-medium rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                    Batch: {{ $frontDeskItem->batch_name }}
+                    Batch: {{ $frontDeskItem->batch_number }}
                 </span>
             @endif
         </div>
@@ -79,6 +79,12 @@
             <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Date Received</p>
                 <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->date_received->format('d/m/Y') }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Batch</p>
+                <p class="font-medium text-gray-900 dark:text-white">
+                    {{ $frontDeskItem->batch_number ? 'Batch ' . $frontDeskItem->batch_number : '-' }}
+                </p>
             </div>
             <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Received Via</p>
@@ -100,12 +106,20 @@
                 <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->address_to }}</p>
             </div>
             <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Passed To</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->passedTo?->name ?? '-' }}</p>
+            </div>
+            <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Letter Date</p>
                 <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->letter_date?->format('d/m/Y') ?? '-' }}</p>
             </div>
             <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Matter / Case Reference</p>
                 <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->matter?->name ?? '-' }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Case Reference</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->case_reference ?? '-' }}</p>
             </div>
         </div>
 

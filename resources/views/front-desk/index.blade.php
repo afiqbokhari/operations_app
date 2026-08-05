@@ -37,7 +37,7 @@
     {{-- Search & Filters --}}
     <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 mb-6">
         <form method="GET" action="{{ route('front-desk.mail.index') }}" class="flex flex-col sm:flex-row gap-3">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search sender, addressee, batch..."
+            <input type="text" name="search" value="{{ request('search') }}"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
             <select name="status"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -53,9 +53,9 @@
                 <option value="Courier" {{ request('received_via')==='Courier' ? 'selected' : '' }}>Courier</option>
                 <option value="Post" {{ request('received_via')==='Post' ? 'selected' : '' }}>Post</option>
             </select>
-            <input type="date" name="date_from" value="{{ request('date_from') }}" placeholder="From"
+            <input type="date" name="date_from" value="{{ request('date_from') }}"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-            <input type="date" name="date_to" value="{{ request('date_to') }}" placeholder="To"
+            <input type="date" name="date_to" value="{{ request('date_to') }}"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
             <button type="submit"
                 class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700">Filter</button>
@@ -94,6 +94,8 @@
                     <th class="px-4 py-3 hidden lg:table-cell">Date</th>
                     <th class="px-4 py-3">From</th>
                     <th class="px-4 py-3">To</th>
+                    <th class="px-4 py-3 hidden lg:table-cell">Passed To</th>
+                    <th class="px-4 py-3 hidden lg:table-cell">Case Ref</th>
                     <th class="px-4 py-3 hidden md:table-cell">Doc Type</th>
                     <th class="px-4 py-3 hidden md:table-cell">Via</th>
                     <th class="px-4 py-3 hidden lg:table-cell">Matter</th>
@@ -115,6 +117,8 @@
                     <td class="px-4 py-3 hidden lg:table-cell text-xs">{{ $item->date_received->format('d/m/y') }}</td>
                     <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $item->contact?->name ?? $item->received_from ?? '-' }}</td>
                     <td class="px-4 py-3">{{ $item->address_to }}</td>
+                    <td class="px-4 py-3 hidden lg:table-cell">{{ $item->passedTo?->name ?? '-' }}</td>
+                    <td class="px-4 py-3 hidden lg:table-cell">{{ $item->case_reference ?? '-' }}</td>
                     <td class="px-4 py-3 hidden md:table-cell">
                         <div class="flex flex-wrap gap-1">
                             @foreach($item->doc_type as $doc)
@@ -168,7 +172,7 @@
                 </tr>
                 @empty
                 <tr class="bg-white dark:bg-gray-800">
-                    <td colspan="9" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">No mail/package items found.</td>
+                    <td colspan="11" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">No mail/package items found.</td>
                 </tr>
                 @endforelse
             </tbody>

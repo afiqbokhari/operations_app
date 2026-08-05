@@ -24,6 +24,21 @@
                     @error('date_received')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
 
+                {{-- Batch Number --}}
+                <div>
+                    <label for="batch_number" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Batch</label>
+                    <select name="batch_number" id="batch_number"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="">-- Select Batch --</option>
+                        @foreach([1 => '8:30AM-10AM', 2 => '10AM-12PM', 3 => '12PM-2:30PM', 4 => '2:30PM-4PM', 5 => '4PM-5:30PM'] as $num => $time)
+                            <option value="{{ $num }}" {{ old('batch_number', App\Models\FrontDeskItem::getCurrentBatchNumber()) == $num ? 'selected' : '' }}>
+                                Batch {{ $num }} ({{ $time }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('batch_number')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+
                 {{-- Received Via --}}
                 <div>
                     <label for="received_via"
@@ -75,8 +90,7 @@
                             "
                             @keydown.escape="open = false"
                             required
-                            placeholder="Type at least 2 characters to search..."
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         
                         <div x-show="open" 
                             x-cloak 
@@ -121,6 +135,20 @@
                     @error('letter_date')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
 
+                {{-- Passed To --}}
+                <div>
+                    <label for="passed_to" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Passed To</label>
+                    <select name="passed_to" id="passed_to"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        @foreach($legalUsers as $user)
+                            <option value="{{ $user->id }}" {{ old('passed_to') == $user->id ? 'selected' : '' }}>
+                                {{ $user->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('passed_to')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+
                 {{-- Matter (autofill) --}}
                 <div>
                     <label for="matter_id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Matter / Case Reference</label>
@@ -156,8 +184,7 @@
                                 }
                             "
                             @keydown.escape="open = false"
-                            placeholder="Type at least 2 characters to search..."
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         
                         <div x-show="open" 
                             x-cloak 
@@ -181,6 +208,16 @@
                         </div>
                     </div>
                     @error('matter_id')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+
+                {{-- Case Reference --}}
+                <div>
+                    <label for="case_reference" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Case Reference</label>
+                    <input type="text" name="case_reference" id="case_reference" 
+                        value="{{ old('case_reference') }}" 
+                        maxlength="20"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    @error('case_reference')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
             </div>
 
