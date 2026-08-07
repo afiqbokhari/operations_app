@@ -25,12 +25,12 @@
             <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">{{ $todayCount }}</p>
         </div>
         <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-5">
-            <p class="text-sm text-gray-500 dark:text-gray-400">Pending Pickup</p>
-            <p class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{{ $pendingPickups }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Pending Pass</p>
+            <p class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{{ $pendingPass }}</p>
         </div>
         <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-5">
-            <p class="text-sm text-gray-500 dark:text-gray-400">Aging (7+ days)</p>
-            <p class="text-3xl font-bold text-red-600 dark:text-red-400">{{ $agingItems }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Awaiting Collection</p>
+            <p class="text-3xl font-bold text-red-600 dark:text-red-400">{{ $awaitingCollection }}</p>
         </div>
     </div>
 
@@ -42,9 +42,9 @@
             <select name="status"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 <option value="">All Status</option>
-                <option value="pending" {{ request('status')==='pending' ? 'selected' : '' }}>Pending Pickup</option>
+                <option value="pending" {{ request('status')==='pending' ? 'selected' : '' }}>Pending Pass</option>
+                <option value="passed" {{ request('status')==='passed' ? 'selected' : '' }}>Awaiting Collection</option>
                 <option value="collected" {{ request('status')==='collected' ? 'selected' : '' }}>Collected</option>
-                <option value="aging" {{ request('status')==='aging' ? 'selected' : '' }}>Aging (7+ days)</option>
             </select>
             <select name="received_via"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -64,19 +64,26 @@
         </form>
     </div>
 
-    {{-- Batch Pickup Button --}}
+    {{-- Batch Pass Button --}}
     <div class="mb-4" x-show="selectedCount > 0" x-cloak>
-        <form action="{{ route('front-desk.mail.batch-collect') }}" method="POST"
-            onsubmit="return confirm('Mark selected item(s) as collected?');"
-            class="inline-flex items-center gap-2">
+        <form action="{{ route('front-desk.mail.batch-pass') }}" method="POST"
+            onsubmit="return confirm('Pass selected item(s) to legal?');"
+            class="inline-flex items-center gap-3">
             @csrf
             <template x-for="id in selectedItems" :key="id">
                 <input type="hidden" name="items[]" :value="id">
             </template>
             <span class="text-sm text-gray-600 dark:text-gray-400" x-text="selectedCount + ' item(s) selected'"></span>
+            <select name="passed_to" required
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <option value="">-- Select Legal Staff --</option>
+                @foreach($legalUsers as $user)
+                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                @endforeach
+            </select>
             <button type="submit"
-                class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700">
-                ✓ Batch Pickup
+                class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700">
+                ✓ Batch Pass
             </button>
         </form>
     </div>
@@ -108,7 +115,7 @@
                 @forelse($items as $item)
                 <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                     <td class="px-3 py-3">
-                        @if(!$item->collected_by)
+                        @if(!$item->passed_to)
                         <input type="checkbox" value="{{ $item->id }}"
                             x-model="selectedItems"
                             @change="selectedCount = selectedItems.length; allSelected = selectedCount === {{ $items->total() }}"
@@ -156,7 +163,7 @@
                             </span>
                         @endif
                     </td>
-                    <td class="px-3 py-3">
+                   <td class="px-3 py-3">
                         <div class="flex items-center gap-1">
                             <a href="{{ route('front-desk.mail.show', $item) }}" title="View"
                                 class="p-1.5 text-blue-600 hover:bg-blue-100 rounded dark:text-blue-400 dark:hover:bg-blue-900">
@@ -166,23 +173,6 @@
                                 class="p-1.5 text-green-600 hover:bg-green-100 rounded dark:text-green-400 dark:hover:bg-green-900">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             </a>
-                            @if(!$item->collected_by)
-                            <form action="{{ route('front-desk.mail.collect', $item) }}" method="POST"
-                                onsubmit="return confirm('Mark this item as collected?');" class="inline">
-                                @csrf
-                                <button title="Collect" class="p-1.5 text-teal-600 hover:bg-teal-100 rounded dark:text-teal-400 dark:hover:bg-teal-900">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                </button>
-                            </form>
-                            @else
-                            <form action="{{ route('front-desk.mail.undo-collect', $item) }}" method="POST"
-                                onsubmit="return confirm('Undo collection?');" class="inline">
-                                @csrf
-                                <button title="Undo" class="p-1.5 text-gray-500 hover:bg-gray-100 rounded dark:text-gray-400 dark:hover:bg-gray-700">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                                </button>
-                            </form>
-                            @endif
                             <form action="{{ route('front-desk.mail.destroy', $item) }}" method="POST"
                                 onsubmit="return confirm('Delete this item?');" class="inline">
                                 @csrf @method('DELETE')

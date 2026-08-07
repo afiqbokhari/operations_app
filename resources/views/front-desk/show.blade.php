@@ -18,22 +18,27 @@
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Item Details</h1>
         <div class="flex gap-2 flex-wrap">
             @can('front_desk.edit')
-            @if(!$frontDeskItem->collected_by)
-            <form action="{{ route('front-desk.mail.collect', $frontDeskItem) }}" method="POST"
-                onsubmit="return confirm('Mark this item as collected?');" class="inline">
+            @if(!$frontDeskItem->passed_to)
+            <form action="{{ route('front-desk.mail.pass', $frontDeskItem) }}" method="POST" class="inline-flex items-center gap-2">
                 @csrf
+                <select name="passed_to" required
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="">-- Select Legal --</option>
+                    @foreach($legalUsers as $user)
+                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                    @endforeach
+                </select>
                 <button type="submit"
-                    class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700">
-                    ✓ Mark Collected
+                    class="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-4 py-2">
+                    ✓ Pass to Legal
                 </button>
             </form>
-            @else
-            <form action="{{ route('front-desk.mail.undo-collect', $frontDeskItem) }}" method="POST"
-                onsubmit="return confirm('Undo collection and return this item to pending?');" class="inline">
+            @elseif(!$frontDeskItem->collected_by)
+            <form action="{{ route('front-desk.mail.undo-pass', $frontDeskItem) }}" method="POST" class="inline">
                 @csrf
                 <button type="submit"
-                    class="text-gray-700 bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
-                    ↩ Undo Collect
+                    class="text-gray-700 bg-gray-200 hover:bg-gray-300 font-medium rounded-lg text-sm px-4 py-2">
+                    ↩ Undo Pass
                 </button>
             </form>
             @endif
@@ -58,13 +63,15 @@
     {{-- Status banner --}}
     <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-5 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div class="flex items-center gap-3">
-            <span class="px-3 py-1 text-sm font-medium rounded {{ $frontDeskItem->collected_by ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' }}">
-                {{ $frontDeskItem->collected_by ? 'Collected' : 'Pending Pickup' }}
-            </span>
+            @if($frontDeskItem->collected_by)
+                <span class="px-3 py-1 text-sm font-medium rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Collected</span>
+            @elseif($frontDeskItem->passed_to)
+                <span class="px-3 py-1 text-sm font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">Passed to Legal</span>
+            @else
+                <span class="px-3 py-1 text-sm font-medium rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Pending</span>
+            @endif
             @if($frontDeskItem->batch_number)
-                <span class="px-3 py-1 text-sm font-medium rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                    Batch: {{ $frontDeskItem->batch_number }}
-                </span>
+                <span class="px-3 py-1 text-sm font-medium rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">Batch {{ $frontDeskItem->batch_number }}</span>
             @endif
         </div>
         <div class="text-sm text-gray-600 dark:text-gray-400">
@@ -105,6 +112,16 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400">Address To</p>
                 <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->address_to }}</p>
             </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Passed To</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->passedTo?->name ?? '-' }}</p>
+            </div>
+            @if($frontDeskItem->passed_by)
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Passed By</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->passedBy?->name ?? '-' }} ({{ $frontDeskItem->passed_at?->format('d/m/Y H:i') }})</p>
+            </div>
+            @endif
             <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Passed To</p>
                 <p class="font-medium text-gray-900 dark:text-white">{{ $frontDeskItem->passedTo?->name ?? '-' }}</p>

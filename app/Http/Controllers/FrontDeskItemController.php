@@ -13,14 +13,17 @@ class FrontDeskItemController extends Controller
 {
     public function index(Request $request)
     {
-        $todayCount = FrontDeskItem::today()->count();
-        $pendingPickups = FrontDeskItem::pendingPickup()->count();
-        $agingItems = FrontDeskItem::aging()->count();
+        if (auth()->user()->hasRole('legal')) {
+            return redirect()->route('front-desk.mail.legal.index');
+        }
 
-        $items = FrontDeskItem::with(['contact', 'matter', 'collectedBy', 'loggedBy'])
+        $todayCount = FrontDeskItem::today()->count();
+        $pendingPass = FrontDeskItem::whereNull('passed_to')->count();
+        $awaitingCollection = FrontDeskItem::whereNotNull('passed_to')->whereNull('collected_by')->count();
+
+        $items = FrontDeskItem::with(['contact', 'matter', 'passedTo', 'passedBy', 'collectedBy', 'loggedBy'])
             ->when($request->search, function ($query, $search) {
                 $query->where('address_to', 'like', "%{$search}%")
-                    ->orWhere('batch_number', 'like', "%{$search}%")
                     ->orWhereHas('contact', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     })
@@ -30,9 +33,9 @@ class FrontDeskItemController extends Controller
             })
             ->when($request->status, function ($query, $status) {
                 match ($status) {
-                    'pending' => $query->pendingPickup(),
+                    'pending' => $query->whereNull('passed_to'),
+                    'passed' => $query->whereNotNull('passed_to')->whereNull('collected_by'),
                     'collected' => $query->whereNotNull('collected_by'),
-                    'aging' => $query->aging(),
                     default => null,
                 };
             })
@@ -49,7 +52,9 @@ class FrontDeskItemController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return view('front-desk.index', compact('items', 'todayCount', 'pendingPickups', 'agingItems'));
+        $legalUsers = User::role('legal')->orderBy('name')->get();
+
+        return view('front-desk.index', compact('items', 'todayCount', 'pendingPass', 'awaitingCollection', 'legalUsers'));
     }
 
     public function dashboard()
@@ -112,6 +117,11 @@ class FrontDeskItemController extends Controller
         }
         unset($validated['matter_name']);
 
+        if (!empty($validated['passed_to'])) {
+            $validated['passed_by'] = auth()->id();
+            $validated['passed_at'] = now();
+        }
+
         $validated['doc_type'] = array_values(array_filter($validated['doc_type'], function($value) {
             return !empty(trim($value));
         }));
@@ -131,9 +141,10 @@ class FrontDeskItemController extends Controller
 
     public function show(FrontDeskItem $frontDeskItem)
     {
-        $frontDeskItem->load(['contact', 'matter', 'collectedBy', 'loggedBy']);
-
-        return view('front-desk.show', compact('frontDeskItem'));
+        $frontDeskItem->load(['contact', 'matter', 'collectedBy', 'loggedBy', 'passedTo', 'passedBy']);
+        $legalUsers = User::role('legal')->orderBy('name')->get();
+        
+        return view('front-desk.show', compact('frontDeskItem', 'legalUsers'));
     }
 
     public function edit(FrontDeskItem $frontDeskItem)
@@ -141,7 +152,7 @@ class FrontDeskItemController extends Controller
         $matters = FrontDeskMatter::select('id', 'name')->orderBy('name')->get();
         $contacts = FrontDeskContact::select('id', 'name', 'company')->orderBy('name')->get();
         $legalUsers = User::role('legal')->orderBy('name')->get();
-        $frontDeskItem->load(['contact', 'matter', 'collectedBy', 'loggedBy', 'passedTo']);
+        $frontDeskItem->load(['contact', 'matter', 'collectedBy', 'loggedBy', 'passedTo', 'passedBy']);
 
         return view('front-desk.edit', compact('frontDeskItem', 'matters', 'contacts', 'legalUsers'));
     }
@@ -182,6 +193,14 @@ class FrontDeskItemController extends Controller
         }
         unset($validated['matter_name']);
 
+        if (!empty($validated['passed_to'])) {
+            $validated['passed_by'] = auth()->id();
+            $validated['passed_at'] = now();
+        } else {
+            $validated['passed_by'] = null;
+            $validated['passed_at'] = null;
+        }
+
         $validated['doc_type'] = array_values(array_filter($validated['doc_type'], function($value) {
             return !empty(trim($value));
         }));
@@ -208,41 +227,103 @@ class FrontDeskItemController extends Controller
             ->with('success', 'Mail/package deleted.');
     }
 
-    public function batchCollect(Request $request)
+    public function pass(Request $request, FrontDeskItem $frontDeskItem)
+    {
+        $validated = $request->validate([
+            'passed_to' => 'required|exists:users,id',
+        ]);
+
+        $frontDeskItem->update([
+            'passed_to' => $validated['passed_to'],
+            'passed_by' => auth()->id(),
+            'passed_at' => now(),
+        ]);
+
+        ActivityLogger::log('FrontDeskItem', $frontDeskItem->id, 'passed', [
+            'Passed to legal: ' . $frontDeskItem->contact?->name,
+        ]);
+
+        return back()->with('success', 'Item passed to legal.');
+    }
+
+    public function batchPass(Request $request)
     {
         $validated = $request->validate([
             'items' => 'required|array',
             'items.*' => 'exists:front_desk_items,id',
+            'passed_to' => 'required|exists:users,id',
         ]);
 
-        $batchNumber = FrontDeskItem::getCurrentBatchNumber();
-        $count = 0;
-
-        $items = FrontDeskItem::whereIn('id', $validated['items'])
-            ->whereNull('collected_by')
-            ->get();
-
-        foreach ($items as $item) {
-            $item->update([
-                'batch_number' => $batchNumber,
-                'collected_by' => auth()->id(),
-                'collected_at' => now(),
+        $count = FrontDeskItem::whereIn('id', $validated['items'])
+            ->whereNull('passed_to')
+            ->update([
+                'passed_to' => $validated['passed_to'],
+                'passed_by' => auth()->id(),
+                'passed_at' => now(),
             ]);
-            $count++;
-        }
 
         if ($count > 0) {
-            ActivityLogger::log('FrontDeskItem', 0, 'batch_collected', [
-                "Batch pickup: {$count} items",
-                "Batch: {$batchNumber}",
+            ActivityLogger::log('FrontDeskItem', 0, 'batch_passed', [
+                "Batch passed to legal: {$count} items",
             ]);
         }
 
         return redirect()->route('front-desk.mail.index')
-            ->with('success', "{$count} item(s) collected in Batch {$batchNumber}.");
+            ->with('success', "{$count} item(s) passed to legal.");
     }
 
-    public function collect(FrontDeskItem $frontDeskItem)
+    public function undoPass(FrontDeskItem $frontDeskItem)
+    {
+        if ($frontDeskItem->collected_by) {
+            return back()->with('error', 'Cannot undo - item already collected by legal.');
+        }
+
+        $frontDeskItem->update([
+            'passed_to' => null,
+            'passed_by' => null,
+            'passed_at' => null,
+        ]);
+
+        ActivityLogger::log('FrontDeskItem', $frontDeskItem->id, 'undo_pass', [
+            'Undo pass: ' . $frontDeskItem->contact?->name,
+        ]);
+
+        return back()->with('success', 'Pass undone. Item returned to pending.');
+    }
+
+    public function legalIndex(Request $request)
+    {
+        $items = FrontDeskItem::with(['contact', 'matter', 'passedTo', 'passedBy', 'collectedBy'])
+            ->when($request->search, function ($query, $search) {
+                $query->where('address_to', 'like', "%{$search}%")
+                    ->orWhereHas('contact', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('matter', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+            })
+            ->when($request->status, function ($query, $status) {
+                if ($status === 'collected') {
+                    $query->whereNotNull('collected_by');
+                } elseif ($status === 'passed') {
+                    $query->whereNull('collected_by');
+                }
+            })
+            ->when($request->date_from, function ($query, $date) {
+                $query->whereDate('date_received', '>=', $date);
+            })
+            ->when($request->date_to, function ($query, $date) {
+                $query->whereDate('date_received', '<=', $date);
+            })
+            ->orderBy('date_received', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return view('front-desk.legal-index', compact('items'));
+    }
+
+    public function legalCollect(FrontDeskItem $frontDeskItem)
     {
         if ($frontDeskItem->collected_by) {
             return back()->with('error', 'This item has already been collected.');
@@ -254,30 +335,33 @@ class FrontDeskItemController extends Controller
         ]);
 
         ActivityLogger::log('FrontDeskItem', $frontDeskItem->id, 'collected', [
-            'Collected: ' . $frontDeskItem->contact->name,
-            'To: ' . $frontDeskItem->address_to,
+            'Collected by legal: ' . $frontDeskItem->contact?->name,
         ]);
 
         return back()->with('success', 'Item marked as collected.');
     }
 
-    public function undoCollect(FrontDeskItem $frontDeskItem)
+    public function legalBatchCollect(Request $request)
     {
-        if (!$frontDeskItem->collected_by) {
-            return back()->with('error', 'This item has not been collected yet.');
+        $validated = $request->validate([
+            'items' => 'required|array',
+            'items.*' => 'exists:front_desk_items,id',
+        ]);
+
+        $count = FrontDeskItem::whereIn('id', $validated['items'])
+            ->whereNull('collected_by')
+            ->update([
+                'collected_by' => auth()->id(),
+                'collected_at' => now(),
+            ]);
+
+        if ($count > 0) {
+            ActivityLogger::log('FrontDeskItem', 0, 'legal_batch_collected', [
+                "Legal batch pickup: {$count} items",
+            ]);
         }
 
-        $frontDeskItem->update([
-            'collected_by' => null,
-            'collected_at' => null,
-            'batch_number' => null,
-        ]);
-
-        ActivityLogger::log('FrontDeskItem', $frontDeskItem->id, 'undo_collected', [
-            'Undo collection: ' . $frontDeskItem->contact->name,
-            'To: ' . $frontDeskItem->address_to,
-        ]);
-
-        return back()->with('success', 'Collection undone. Item is pending again.');
+        return redirect()->route('front-desk.mail.legal.index')
+            ->with('success', "{$count} item(s) collected.");
     }
 }

@@ -17,6 +17,8 @@ class FrontDeskItem extends Model
         'contact_id',
         'address_to',
         'passed_to', 
+        'passed_by',
+        'passed_at',
         'letter_date',
         'case_reference',  
         'matter_id',
@@ -34,7 +36,10 @@ class FrontDeskItem extends Model
         'letter_date' => 'date',
         'doc_type' => 'array',
         'collected_at' => 'datetime',
+        'passed_at' => 'datetime',
     ];
+
+    protected $appends = ['status'];
 
     public function contact(): BelongsTo
     {
@@ -54,6 +59,11 @@ class FrontDeskItem extends Model
     public function passedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'passed_to');
+    }
+    
+    public function passedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'passed_by');
     }
 
     public function loggedBy(): BelongsTo
@@ -91,5 +101,16 @@ class FrontDeskItem extends Model
             $time >= 1600 && $time < 1730 => 5,  // 4:00 PM - 5:30 PM
             default => null,                      // Outside batch hours
         };
+    }
+
+    public function getStatusAttribute(): string
+    {
+        if ($this->collected_by) {
+            return 'collected';
+        }
+        if ($this->passed_to) {
+            return 'passed';
+        }
+        return 'pending';
     }
 }

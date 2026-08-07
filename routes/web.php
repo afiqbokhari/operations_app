@@ -28,12 +28,16 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/module/switch', [ModuleController::class, 'switch'])->name('module.switch');
 
-    // Front Desk
+    // Front Desk module
     Route::prefix('front-desk')->name('front-desk.')->group(function () {
-        // Front Desk Dashboard
         Route::get('/dashboard', [FrontDeskItemController::class, 'dashboard'])->middleware('permission:front_desk.view')->name('dashboard');
 
-        // Front Desk - Mail Log
+        // Legal Mail Log - MUST be before /mail/{frontDeskItem}
+        Route::get('/mail/legal', [FrontDeskItemController::class, 'legalIndex'])->middleware('permission:front_desk.view')->name('mail.legal.index');
+        Route::post('/mail/legal/batch-collect', [FrontDeskItemController::class, 'legalBatchCollect'])->middleware('permission:front_desk.edit')->name('mail.legal.batch-collect');
+        Route::post('/mail/legal/{frontDeskItem}/collect', [FrontDeskItemController::class, 'legalCollect'])->middleware('permission:front_desk.edit')->name('mail.legal.collect');
+
+        // Mail Log
         Route::get('/mail', [FrontDeskItemController::class, 'index'])->middleware('permission:front_desk.view')->name('mail.index');
         Route::get('/mail/create', [FrontDeskItemController::class, 'create'])->middleware('permission:front_desk.create')->name('mail.create');
         Route::get('/mail/{frontDeskItem}', [FrontDeskItemController::class, 'show'])->middleware('permission:front_desk.view')->name('mail.show');
@@ -41,9 +45,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/mail/{frontDeskItem}/edit', [FrontDeskItemController::class, 'edit'])->middleware('permission:front_desk.edit')->name('mail.edit');
         Route::put('/mail/{frontDeskItem}', [FrontDeskItemController::class, 'update'])->middleware('permission:front_desk.edit')->name('mail.update');
         Route::delete('/mail/{frontDeskItem}', [FrontDeskItemController::class, 'destroy'])->middleware('permission:front_desk.delete')->name('mail.destroy');
-        Route::post('/mail/batch-collect', [FrontDeskItemController::class, 'batchCollect'])->middleware('permission:front_desk.edit')->name('mail.batch-collect');
-        Route::post('/mail/{frontDeskItem}/collect', [FrontDeskItemController::class, 'collect'])->middleware('permission:front_desk.edit')->name('mail.collect');
-        Route::post('/mail/{frontDeskItem}/undo-collect', [FrontDeskItemController::class, 'undoCollect'])->middleware('permission:front_desk.edit')->name('mail.undo-collect');
+        Route::post('/mail/{frontDeskItem}/pass', [FrontDeskItemController::class, 'pass'])->middleware('permission:front_desk.edit')->name('mail.pass');
+        Route::post('/mail/batch-pass', [FrontDeskItemController::class, 'batchPass'])->middleware('permission:front_desk.edit')->name('mail.batch-pass');
+        Route::post('/mail/{frontDeskItem}/undo-pass', [FrontDeskItemController::class, 'undoPass'])->middleware('permission:front_desk.edit')->name('mail.undo-pass');
     });
 
     // Booking module
